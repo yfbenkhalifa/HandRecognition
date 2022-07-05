@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/HandRecognition.dir/main.cpp.o -c /home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/main.cpp",
+  "file": "/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/main.cpp"
+}
+]
