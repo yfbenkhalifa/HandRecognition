@@ -1,0 +1,1 @@
+/usr/bin/g++ -g -rdynamic CMakeFiles/main_shared.dir/src/main.cpp.o -o main_shared  -lexample_shared 

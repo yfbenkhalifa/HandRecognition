@@ -1,0 +1,1 @@
+/usr/bin/g++ -g -rdynamic CMakeFiles/main_header_only.dir/src/main.cpp.o -o main_header_only  -lexample_interface 

@@ -1,0 +1,1 @@
+/usr/bin/g++ -g -rdynamic CMakeFiles/main_static.dir/src/main.cpp.o -o main_static  -lexample_static 

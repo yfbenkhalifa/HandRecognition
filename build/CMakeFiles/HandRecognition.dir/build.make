@@ -92,6 +92,22 @@ HandRecognition_EXTERNAL_OBJECTS =
 
 HandRecognition: CMakeFiles/HandRecognition.dir/main.cpp.o
 HandRecognition: CMakeFiles/HandRecognition.dir/build.make
+HandRecognition: /usr/local/lib/libopencv_gapi.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_highgui.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_ml.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_objdetect.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_photo.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_stitching.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_video.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_videoio.so.4.5.5
+HandRecognition: src/libsrc.a
+HandRecognition: /usr/local/lib/libopencv_imgcodecs.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_dnn.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_calib3d.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_features2d.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_flann.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_imgproc.so.4.5.5
+HandRecognition: /usr/local/lib/libopencv_core.so.4.5.5
 HandRecognition: CMakeFiles/HandRecognition.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable HandRecognition"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/HandRecognition.dir/link.txt --verbose=$(VERBOSE)

@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(HandRecognition VERSION 0.1.0)
+cmake_minimum_required(VERSION 3.0)
+project(main)
+set(SOURCE_FILES src/main.cpp)
 
-include(CTest)
-enable_testing()
+include_directories(lib/preprocess)
+include_directories(lib/preprocess)
+add_executable(${PROJECT_NAME} src/main.cpp)
+# Add lib subdirectory (to build our libraries)
+add_subdirectory(lib/preprocess)
 
-add_executable(HandRecognition main.cpp)
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)

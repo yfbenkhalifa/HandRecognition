@@ -1,7 +1,12 @@
 [
 {
   "directory": "/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/build",
-  "command": "/usr/bin/g++   -g -o CMakeFiles/HandRecognition.dir/main.cpp.o -c /home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/main.cpp",
-  "file": "/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/main.cpp"
+  "command": "/usr/bin/g++  -I/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/lib/preprocess -g -o CMakeFiles/main.dir/src/main.cpp.o -c /home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/src/main.cpp",
+  "file": "/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/src/main.cpp"
+},
+{
+  "directory": "/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/build/lib/preprocess",
+  "command": "/usr/bin/g++  -I/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/lib/preprocess -isystem /usr/local/include/opencv4 -g -o CMakeFiles/preprocess.dir/src/preprocess.cpp.o -c /home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/lib/preprocess/src/preprocess.cpp",
+  "file": "/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/lib/preprocess/src/preprocess.cpp"
 }
 ]

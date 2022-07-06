@@ -1,0 +1,2 @@
+/usr/bin/ar qc libpreprocess_static.a CMakeFiles/preprocess_static.dir/src/preprocess.cpp.o
+/usr/bin/ranlib libpreprocess_static.a

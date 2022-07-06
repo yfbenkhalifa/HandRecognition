@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/g++
 CXX_DEFINES = 
 
-CXX_INCLUDES = 
+CXX_INCLUDES = -I/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/build -I/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/build/src -I/home/wiz/OneDrive/Documents/UniPD/Git/HandRecognition/build/include -isystem /usr/local/include/opencv4
 
 CXX_FLAGS = -g
 
