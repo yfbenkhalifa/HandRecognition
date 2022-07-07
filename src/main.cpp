@@ -1,4 +1,4 @@
-#include "../lib/preprocess/include/preprocess.h"
+#include "preprocess.h"
 
 
 int main (int argcc, char ** argv){
