@@ -1,3 +1,0 @@
-/home/robertodelben/Desktop/source/HandRecognition/build/CMakeFiles/hand_recognition.dir
-/home/robertodelben/Desktop/source/HandRecognition/build/CMakeFiles/edit_cache.dir
-/home/robertodelben/Desktop/source/HandRecognition/build/CMakeFiles/rebuild_cache.dir
