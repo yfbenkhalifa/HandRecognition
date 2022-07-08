@@ -1,3 +1,5 @@
+#include "common.h"
+
 class Preprocess
 {
 private:
