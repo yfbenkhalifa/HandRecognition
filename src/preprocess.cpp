@@ -1,18 +1,18 @@
 #include "preprocess.h"
 #include "common.h"
+using namespace std;
 
-int Preprocess::getPrivate(){
-    return private_variable;
-}
 
 bool isWithin(Vec3b vec, Vec3b minThreshold, Vec3b maxThreshold)
 {
     for(int i=0; i < 3; i++){
-        if (vec[i] > minThreshold[i] || vec[i] < maxThreshold[i])
+        if (vec[i] >= minThreshold[i] || vec[i] <= maxThreshold[i])
             return false;
     }
     return true;
 }
+
+
 
 Mat segment(Mat img, Vec3b minThreshold, Vec3b maxThreshold, Vec3b avg)
 {

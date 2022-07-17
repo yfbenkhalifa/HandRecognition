@@ -18,11 +18,3 @@ Mat sharpenImage (Mat, Mat, double);
 // Returns true if the pixel BGR intensity is within the given thresholds 
 bool isWithin(Vec3b, Vec3b, Vec3b);
 
-class Preprocess
-{
-private:
-    int private_variable;
-
-public:
-    int getPrivate();
-};
