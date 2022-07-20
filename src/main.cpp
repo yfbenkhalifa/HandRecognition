@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <iostream>
 #include <vector>
+#include <fstream>
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -48,9 +49,18 @@ int main(int argcc, char **argv) {
     struct dirent *diread;
     vector<char *> files;
 
-    if ((dir = opendir("/")) != nullptr) {
-        while ((diread = readdir(dir)) != nullptr) {
-            files.push_back(diread->d_name);
+    for(auto image : dataset){
+        image.loadCoordinates();
+        image.cutImage();
+        image.segmentImage();
+        //imshow("hand", image.src);
+        //waitKey(0);
+        for(auto mask : image.handSrc){
+            //cout << image.id << endl;
+            //imshow("hand", mask);
+            //waitKey(0);
+            string saveFileName = "../dataset/processed/" + to_string(image.id) + ".jpg";  
+            imwrite(saveFileName, mask);
         }
         closedir(dir);
     } else {
