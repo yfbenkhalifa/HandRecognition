@@ -1,9 +1,9 @@
+#include "common.h"
 #include "preprocess.h"
 #include "segmentation.h"
 #include <filesystem>
 #include <iostream>
 #include <string>
-#include "common.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -16,12 +16,14 @@ int main(int argcc, char **argv) {
     string imagesPath = "../dataset/rgb/*";
 
     vector<std::string> files;
-    glob(imagesPath, files);
+    glob(imagesPath, files);  
 
     for (const string &file : files) {
         cout << file << endl;
-        Mat image = imread(file);
-        GaussianBlur(image, image, Size(5, 5), 20);
+        Mat input = imread(file), image;
+        // medianBlur(input, image, 7);
+        // bilateralFilter(input, image, 25, 150, 150);
+        GaussianBlur(input, image, Size(7, 7), 10);
         imshow("Original", image);
         Mat output = Segmentation::ClusterWithMeanShift(image);
     }
