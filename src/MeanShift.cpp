@@ -1,10 +1,13 @@
 #include "MeanShift.h"
 #include "sample.h"
 #include <algorithm>
+#include <chrono>
 #include <execution>
+#include <iostream>
 #include <list>
 #include <math.h>
 #include <stdio.h>
+#include <thread>
 
 using namespace std;
 
@@ -26,27 +29,27 @@ void MeanShift::set_kernel(double (*_kernel_func)(double, double)) {
 }
 
 Sample MeanShift::shift_point(const Sample &point) {
+
     Sample shifted_point(point.color.size(), point.location.size(), point.originalLocation);
 
     int skipped = 0;
     double total_weight = 0;
 
-    int x1 = clamp((int)point.location[0] - window_size / 2, 0, image.cols - 1);
-    int x2 = clamp((int)point.location[0] + window_size / 2, 0, image.cols - 1);
-    int y1 = clamp((int)point.location[1] - window_size / 2, 0, image.rows - 1);
-    int y2 = clamp((int)point.location[1] + window_size / 2, 0, image.rows - 1);
+    int x1 = clamp((int)point.location[0] - spatial_bandwidth, 0, image.cols - 1);
+    int x2 = clamp((int)point.location[0] + spatial_bandwidth, 0, image.cols - 1);
+    int y1 = clamp((int)point.location[1] - spatial_bandwidth, 0, image.rows - 1);
+    int y2 = clamp((int)point.location[1] + spatial_bandwidth, 0, image.rows - 1);
     Rect roi(x1, y1, x2 - x1, y2 - y1);
 
     Mat imageRoi = image(roi);
 
-    for (int r = 0; r < imageRoi.rows; r += window_size / 5)
-        for (int c = 0; c < imageRoi.cols; c += window_size / 5) {
+    for (int r = 0; r < imageRoi.rows; r++)
+        for (int c = 0; c < imageRoi.cols; c++) {
             Sample current = Sample(imageRoi, r, c, x1, y1);
             double colorDistance = point.colorDistanceFrom(current);
-            double locationDistance = point.locationDistanceFrom(current);
+            // double locationDistance = point.locationDistanceFrom(current);
 
-            double colorWeight = kernel_func(colorDistance, 15), locationWeight = kernel_func(locationDistance, window_size / 5);
-            double weight = colorWeight * locationWeight;
+            double weight = gaussian_kernel(colorDistance, color_bandwidth); // colorDistance < color_bandwidth ? 1 : 0;
 
             if (weight == 0)
                 continue;
@@ -62,19 +65,15 @@ Sample MeanShift::shift_point(const Sample &point) {
     return shifted_point;
 }
 
-vector<Sample> MeanShift::meanshift(const vector<Sample> &_points, double _kernel_bandwidth, double _epsilon) {
-    kernel_bandwidth = _kernel_bandwidth;
-    EPSILON = _epsilon;
-    return meanshift(_points);
-}
-
 Sample MeanShift::meanshiftSinglePoint(const Sample &point) {
     Sample prev_point(point);
     Sample point_new = shift_point(point);
-    for (int i = 0; i < MAX_ITERATIONS; i++) {
-        double shift_distance = point_new.distanceFrom(prev_point);
+    int i = 0;
+    for (; i < MAX_ITERATIONS; i++) {
+        double color_shift_distance = point_new.colorDistanceFrom(prev_point);
+        double location_shift_distance = point_new.locationDistanceFrom(prev_point);
 
-        if (shift_distance <= EPSILON)
+        if (color_shift_distance < MIN_COLOR_SHIFT || location_shift_distance < MIN_LOCATION_SHIFT)
             break;
 
         prev_point = point_new;
@@ -84,61 +83,105 @@ Sample MeanShift::meanshiftSinglePoint(const Sample &point) {
     return point_new;
 }
 
-vector<Sample> MeanShift::meanshift(const vector<Sample> &_points) {
+Sample *MeanShift::meanshift(const vector<Sample> &_points) {
 
-    vector<Sample> shifted_points;
+    Sample *shifted_points = new Sample[image.cols * image.rows];
     int current_progress = 10;
+    double progress = 0;
 
     for_each(execution::par, _points.begin(), _points.end(), [&](auto &&point) {
+        // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
         Sample point_new = meanshiftSinglePoint(point);
         // point_new += pruneSample;
         // Sample point_new = meanshiftSinglePoint(point);
+        int index = point_new.originalLocation[0] + point_new.originalLocation[1] * image.cols;
+        shifted_points[index] = point_new;
 
         shift_lock.lock();
-        shifted_points.push_back(point_new);
-        int progress = (int)(100.0 * shifted_points.size() / _points.size());
+        progress += 100.0 / _points.size();
         if (progress > current_progress) {
-            printf("Progress: %d% \n", current_progress);
-            current_progress = progress - (progress % 10) + 10;
+            cout << "Progress: " << current_progress << "%" << endl;
+            current_progress = (int)progress - ((int)progress % 10) + 10;
         }
         shift_lock.unlock();
+        // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        // std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+        // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     });
     return shifted_points;
 }
 
-vector<Cluster> MeanShift::cluster(const std::vector<Sample> &points, const std::vector<Sample> &shifted_points) {
-    vector<Cluster> clusters;
-
-    for (int i = 0; i < shifted_points.size(); i++) {
-        int c = 0;
-        for (; c < clusters.size(); c++) {
-            double color_distance = shifted_points[i].colorDistanceFrom(clusters[c].mode);
-            double location_distance = shifted_points[i].locationDistanceFrom(clusters[c].mode);
-
-            if (color_distance < 50 && location_distance < window_size)
-                break;
-
-            // double distance = shifted_points[i].distanceFrom(clusters[c].mode);
-
-            // if (distance <= CLUSTER_EPSILON)
-            //     break;
+vector<Point> MeanShift::grow(const Sample *shifted_points, const vector<Point> &points, int *mask, const int &clusterIndex) {
+    vector<Point> new_points;
+    for (int i = 0; i < points.size(); i++) {
+        int index = points[i].x + points[i].y * image.cols;
+        for (int k = 0; k < 8; k++) {
+            int nIndex = index + neighbors[k][0] + neighbors[k][1] * image.cols;
+            if (nIndex >= 0 && (nIndex < image.rows * image.cols) && (mask[nIndex] < 0)) {
+                double color_distance = shifted_points[nIndex].colorDistanceFrom(shifted_points[index]);
+                if (color_distance < color_bandwidth) {
+                    mask[nIndex] = clusterIndex;
+                    Point new_point(points[i]);
+                    new_point.x += neighbors[k][0];
+                    new_point.y += neighbors[k][1];
+                    new_points.push_back(new_point);
+                }
+            }
         }
-
-        if (c == clusters.size()) {
-            Cluster clus;
-            clus.mode = shifted_points[i];
-            clusters.push_back(clus);
-        } else {
-            clusters[c].mode = (clusters[c].mode * clusters[c].shifted_points.size() + shifted_points[i]) / (clusters[c].shifted_points.size() + 1);
-        }
-        clusters[c].shifted_points.push_back(shifted_points[i]);
     }
-
-    return clusters;
+    return new_points;
 }
 
-vector<Cluster> MeanShift::cluster(const std::vector<Sample> &points, double _kernel_bandwidth) {
-    kernel_bandwidth = _kernel_bandwidth;
-    std::vector<Sample> shifted_points = meanshift(points, kernel_bandwidth, 0.1);
-    return cluster(points, shifted_points);
+vector<Cluster> MeanShift::cluster(const Sample *shifted_points) {
+    vector<Cluster> clusters;
+    int clusterIndex = 0;
+    int mask[image.cols * image.rows];
+
+    memset(mask, -1, image.cols * image.rows * sizeof(int));
+
+    for (int x = 0; x < image.cols; x++) {
+        for (int y = 0; y < image.rows; y++) {
+            int index = x + y * image.cols;
+            if (mask[index] >= 0)
+                continue;
+
+            clusterIndex = clusters.size();
+            Cluster newCluster;
+            newCluster.mode = Sample(shifted_points[index]);
+            newCluster.shifted_points.push_back(shifted_points[index]);
+
+            vector<Point> growingVector = {{Point(x, y)}};
+            mask[index] = clusterIndex;
+
+            while (growingVector.size() > 0) {
+
+                growingVector = grow(shifted_points, growingVector, mask, clusterIndex);
+
+                for (int i = 0; i < growingVector.size(); i++) {
+                    int newIndex = growingVector[i].x + growingVector[i].y * image.cols;
+                    newCluster.mode += shifted_points[newIndex];
+                    newCluster.shifted_points.push_back(shifted_points[newIndex]);
+                }
+            }
+
+            clusters.push_back(newCluster);
+        }
+    }
+
+    vector<Cluster> validClusters;
+
+    for (int i = 0; i < clusters.size(); i++) {
+        if (clusters[i].shifted_points.size() > 50) {
+            clusters[i].mode = clusters[i].mode / clusters[i].shifted_points.size();
+            validClusters.push_back(clusters[i]);
+        }
+    }
+
+    return validClusters;
+}
+
+vector<Cluster> MeanShift::cluster(const std::vector<Sample> &points) {
+    Sample *shifted_points = meanshift(points);
+    return cluster(shifted_points);
 }

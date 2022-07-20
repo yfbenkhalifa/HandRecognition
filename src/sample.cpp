@@ -10,7 +10,7 @@ double euclidean_distance_square(const vector<double> &point_a, const vector<dou
         const double temp = (point_a[i] - point_b[i]);
         total += temp * temp;
     }
-    return (total);
+    return total;
 }
 
 double euclidean_distance(const vector<double> &point_a, const vector<double> &point_b) { return sqrt(euclidean_distance_square(point_a, point_b)); }

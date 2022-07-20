@@ -15,7 +15,7 @@ Mat Segmentation::ClusterWithMeanShift(Mat input) {
     int resize_scale = 2;
 
     resize(input, input, Size(input.cols / resize_scale, input.rows / resize_scale));
-    cvtColor(input, input, COLOR_RGB2Luv);
+    cvtColor(input, input, COLOR_BGR2HSV);
 
     vector<Sample> samples;
 
@@ -23,8 +23,8 @@ Mat Segmentation::ClusterWithMeanShift(Mat input) {
         for (int c = 0; c < input.cols; c += 1)
             samples.push_back(Sample(input, r, c));
 
-    MeanShift *c = new MeanShift(input);
-    vector<Cluster> clusters = c->cluster(samples, 1);
+    MeanShift *c = new MeanShift(input, 3, 6);
+    vector<Cluster> clusters = c->cluster(samples);
 
     int n_clusters = (int)clusters.size();
 
@@ -43,12 +43,12 @@ Mat Segmentation::ClusterWithMeanShift(Mat input) {
             Sample *current = &clusters[c].shifted_points[i];
             Point originalLocation(current->originalLocation[0], current->originalLocation[1]);
             Point location(mode->location[0], mode->location[1]);
-            drawMarker(output, location, Scalar(255, 0, 0), MARKER_STAR / 2);
+            // drawMarker(output, location, Scalar(255, 0, 0), MARKER_STAR / 2);
             output.at<Vec3b>(originalLocation) = Vec3b(mode->color[0], mode->color[1], mode->color[2]);
         }
     }
 
-    cvtColor(output, output, COLOR_Luv2RGB);
+    cvtColor(output, output, COLOR_HSV2BGR);
     resize(output, output, Size(input.cols, input.rows));
     imshow("Output", output);
     waitKey(0);

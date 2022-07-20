@@ -6,9 +6,9 @@
 #include <string>
 
 #include "dataset.cpp"
+#include <dirent.h>
 #include <iostream>
 #include <vector>
-#include <dirent.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -26,10 +26,16 @@ int mainClustering(int argcc, char **argv) {
     for (const string &file : files) {
         cout << file << endl;
         Mat input = imread(file), image;
+
+        GaussianBlur(input, image, Size(7, 7), 10);
+        // Preprocess::equalize(image, image);
+        imshow("Original", input);
+        imshow("Equalized", image);
+        waitKey(0);
+
         // medianBlur(input, image, 7);
         // bilateralFilter(input, image, 25, 150, 150);
-        GaussianBlur(input, image, Size(7, 7), 10);
-        imshow("Original", image);
+        // GaussianBlur(input, image, Size(7, 7), 10);
         Mat output = Segmentation::ClusterWithMeanShift(image);
     }
 }
