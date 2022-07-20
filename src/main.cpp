@@ -1,6 +1,11 @@
-#include "preprocess.h"
 #include "common.h"
-#include "dataset.h"
+#include "preprocess.h"
+#include "segmentation.h"
+#include <filesystem>
+#include <iostream>
+#include <string>
+
+#include "dataset.cpp"
 #include <iostream>
 #include <vector>
 #include <dirent.h>
@@ -11,21 +16,37 @@
 using std::vector;
 using namespace std;
 
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
-int main (int argcc, char ** argv){
-    vector<Image> dataset;
-    vector<Mat> masks;
-    
+using namespace std;
+using namespace cv;
 
-    for(int i=1; i<100; i++){
-        char intString[32] ;
-        char path [100] = "../dataset/training/";
-        sprintf(intString, "%d", i);
-        //cout << intString << endl;
-        Image temp = readImageFiles(strcat(path, intString), i);
-        temp.id = i;
-        dataset.push_back(temp);
+int mainClustering(int argcc, char **argv) {
+    string imagesPath = "../dataset/rgb/*";
+
+    vector<std::string> files;
+    glob(imagesPath, files);
+
+    for (const string &file : files) {
+        cout << file << endl;
+        Mat input = imread(file), image;
+        // medianBlur(input, image, 7);
+        // bilateralFilter(input, image, 25, 150, 150);
+        GaussianBlur(input, image, Size(7, 7), 10);
+        imshow("Original", image);
+        Mat output = Segmentation::ClusterWithMeanShift(image);
     }
+}
+
+int main(int argcc, char **argv) {
+    vector<Mat> images;
+    string path = "../../Lab7/Datasets/dolomites";
+
+    DIR *dir;
+    struct dirent *diread;
+    vector<char *> files;
 
     for(auto image : dataset){
         image.loadCoordinates();
@@ -40,8 +61,14 @@ int main (int argcc, char ** argv){
             string saveFileName = "../dataset/processed/" + to_string(image.id) + ".jpg";  
             imwrite(saveFileName, mask);
         }
+        closedir(dir);
+    } else {
+        perror("opendir");
+        return EXIT_FAILURE;
     }
-    // //imshow("test", dataset.at(0).handSrc.size());
-    // waitKey(0);
+
+    for (auto file : files)
+        cout << file << "| ";
+    cout << endl;
     return -1;
 }
