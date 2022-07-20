@@ -5,5 +5,6 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <vector>
 using namespace cv; 
+using namespace std;

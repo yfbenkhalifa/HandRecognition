@@ -5,6 +5,11 @@
 #include <iostream>
 #include <string>
 
+#include "dataset.cpp"
+#include <iostream>
+#include <vector>
+#include <dirent.h>
+
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -12,11 +17,11 @@
 using namespace std;
 using namespace cv;
 
-int main(int argcc, char **argv) {
+int mainClustering(int argcc, char **argv) {
     string imagesPath = "../dataset/rgb/*";
 
     vector<std::string> files;
-    glob(imagesPath, files);  
+    glob(imagesPath, files);
 
     for (const string &file : files) {
         cout << file << endl;
@@ -27,5 +32,28 @@ int main(int argcc, char **argv) {
         imshow("Original", image);
         Mat output = Segmentation::ClusterWithMeanShift(image);
     }
+}
+
+int main(int argcc, char **argv) {
+    vector<Mat> images;
+    string path = "../../Lab7/Datasets/dolomites";
+
+    DIR *dir;
+    struct dirent *diread;
+    vector<char *> files;
+
+    if ((dir = opendir("/")) != nullptr) {
+        while ((diread = readdir(dir)) != nullptr) {
+            files.push_back(diread->d_name);
+        }
+        closedir(dir);
+    } else {
+        perror("opendir");
+        return EXIT_FAILURE;
+    }
+
+    for (auto file : files)
+        cout << file << "| ";
+    cout << endl;
     return -1;
 }
