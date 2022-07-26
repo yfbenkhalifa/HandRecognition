@@ -20,4 +20,6 @@ class Preprocess {
 
     // Returns true if the pixel BGR intensity is within the given thresholds
     static bool isWithin(Vec3b, Vec3b, Vec3b);
+
+    void sharpen(Mat);
 };
