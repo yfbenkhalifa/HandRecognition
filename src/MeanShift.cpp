@@ -35,10 +35,10 @@ Sample MeanShift::shift_point(const Sample &point) {
     int skipped = 0;
     double total_weight = 0;
 
-    int x1 = clamp((int)point.location[0] - spatial_bandwidth, 0, image.cols - 1);
-    int x2 = clamp((int)point.location[0] + spatial_bandwidth, 0, image.cols - 1);
-    int y1 = clamp((int)point.location[1] - spatial_bandwidth, 0, image.rows - 1);
-    int y2 = clamp((int)point.location[1] + spatial_bandwidth, 0, image.rows - 1);
+    int x1 = max((int)point.location[0] - spatial_bandwidth, 0);
+    int x2 = min((int)point.location[0] + spatial_bandwidth, image.cols - 1);
+    int y1 = max((int)point.location[1] - spatial_bandwidth, 0);
+    int y2 = min((int)point.location[1] + spatial_bandwidth, image.rows - 1);
     Rect roi(x1, y1, x2 - x1, y2 - y1);
 
     Mat imageRoi = image(roi);
@@ -89,7 +89,7 @@ Sample *MeanShift::meanshift(const vector<Sample> &_points) {
     int current_progress = 10;
     double progress = 0;
 
-    for_each(execution::par, _points.begin(), _points.end(), [&](auto &&point) {
+    for_each(/*execution::par,*/ _points.begin(), _points.end(), [&](auto &&point) {
         // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
         Sample point_new = meanshiftSinglePoint(point);
