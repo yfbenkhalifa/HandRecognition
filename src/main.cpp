@@ -1,117 +1,123 @@
 #include "common.h"
-#include "evaluation.h"
 #include "preprocess.h"
-#include "segmentation.h"
-#include <dirent.h>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <string>
+#include <stdexcept>
+#include <stdio.h>
+#include "dataset.h"
+#include <dirent.h>
+#include <iostream>
 #include <vector>
+#include <fstream>
 
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
+#include <iostream>
 
+#include <Python.h>
 using namespace std;
 using namespace cv;
 
-// std::vector<int> explode(std::string const &s, char delim) {
-//     std::vector<int> result;
-//     std::istringstream iss(s);
+string pytohnCommand = "python3 ../python/main.py ";
+string activeDir = "../activeDir/";
+string saveDir = "../results/handDetection/";
+int detectionWidth, detectionHeight;
+int detectOffsetX, detectOffsetY;
+int maxHands = 4;
+double scoreThreshold = 0.95;
 
-//     for (std::string token; std::getline(iss, token, delim);) {
-//         result.push_back(stoi(std::move(token)));
-//     }
+vector<Scalar> colors = {(255,255,0), (255,0,0), (0,0,255), (0,255,0), (255,0,255), (0,255,255), (150,200,50)};
 
-//     return result;
-// }
+string exec(string command) {
 
-// int main(int argcc, char **argv) {
-//     string imagesPath = "../dataset/rgb/*";
+   char buffer[128];
+   string result = "";
 
-//     vector<std::string> files;
-//     glob(imagesPath, files);
+   // Open pipe to file
+   FILE* pipe = popen(command.c_str(), "r");
+   if (!pipe) {
+      return "popen failed!";
+   }
 
-//     for (const string &file : files) {
-//         cout << file << endl;
-//         Mat input = imread(file);
-//         Mat preprocessed = input.clone();
+   // read till end of process:
+   while (!feof(pipe)) {
 
-//         // imshow("Input", input);
+      // use buffer to read and add to result
+      if (fgets(buffer, 128, pipe) != NULL)
+         result += buffer;
+   }
 
-//         // GaussianBlur(input, preprocessed, Size(7, 7), 10);
+   pclose(pipe);
+   return result;
+}
 
-//         string det_path = "../dataset/det/";
-//         string det_file = file.substr(15, file.length() - 19);
-//         det_path.append(det_file).append(".txt");
-//         ifstream myfile(det_path);
 
-//         vector<Rect> rectangles;
-//         if (myfile.is_open()) {
-//             string line;
-//             while (getline(myfile, line)) {
-//                 vector<int> params = explode(line, '\t');
-//                 rectangles.push_back(Rect(params[0], params[1], params[2], params[3]));
-//             }
-//             myfile.close();
-//         }
 
-//         Mat mask(input.size(), CV_8UC1);
-//         mask.setTo(0);
+vector<HandMetadata> detect(Mat src) {
+    //Takes as argument the image path and reads it 
+    //Mat src = imread(srcPath);
+    //Select detection parameters
+    imwrite(activeDir + "src.jpg", src);
 
-//         for (int i = 0; i < rectangles.size(); i++) {
-//             Mat roi = preprocessed(rectangles[i]);
-
-//             // bilateralFilter(roi, preprocessed, 7, 20, 150);
-//             // Preprocess::saturate(preprocessed, preprocessed);
-
-//             // imshow("Preprocessed", preprocessed);
-
-//             Mat output = Segmentation::ClusterWithMeanShift(roi);
-
-//             Mat mask_roi = mask(rectangles[i]);
-//             output.copyTo(mask_roi);
-//         }
-
-//         string mask_path = "../dataset/mask/";
-//         string mask_file = file.substr(15, file.length() - 19);
-//         mask_path.append(mask_file).append(".png");
-//         Mat gt_mask = imread(mask_path, IMREAD_GRAYSCALE);
-
-//         cout << "Error: " << evaluateMask(gt_mask, mask) << endl;
-//     }
-// }
-
-int main(int argcc, char **argv) {
-    vector<Mat> images;
-    string path = "../../Lab7/Datasets/dolomites";
-
-    DIR *dir;
-    struct dirent *diread;
-    vector<char *> files;
-
-    for(auto image : dataset){
-        image.loadCoordinates();
-        image.cutImage();
-        image.segmentImage();
-        //imshow("hand", image.src);
-        //waitKey(0);
-        for(auto mask : image.handSrc){
-            //cout << image.id << endl;
-            //imshow("hand", mask);
-            //waitKey(0);
-            string saveFileName = "../dataset/processed/" + to_string(image.id) + ".jpg";
-            imwrite(saveFileName, mask);
-        }
-        closedir(dir);
-    } else {
-        perror("opendir");
-        return EXIT_FAILURE;
+    string command = pytohnCommand;
+    string result = exec(command);
+    cout << result << endl;
+    vector<int> handROICoords = readCSV(activeDir + "test.csv");
+    //Perform detection
+    vector<HandMetadata> hands;
+    for(int i=0; i<handROICoords.size(); i+=4){
+        vector<int> vec {&handROICoords[i], &handROICoords[i+4]};
+        HandMetadata temp = loadHandMetadata(vec);
+        hands.push_back(temp);
     }
+    
+    //cout << "Found " + to_string(hands.size()) + " hand" << endl;
+    
+    
+    return hands;
+}
 
-    for (auto file : files)
-        cout << file << "| ";
-    cout << endl;
+Mat drawROI(Mat src, vector<HandMetadata> hands){
+    Mat dst = src.clone();
+    int colorId = 0;
+    int thickness = 2;
+    for(auto hand : hands){
+        Point p1(hand.PosX, hand.PosY);
+        Point p2(hand.PosX + hand.Width, hand.PosY + hand.Height);
+        rectangle(dst, p1, p2,
+                colors.at(colorId),
+                thickness, LINE_8);
+        colorId += 1;
+        if(colorId == colors.size()) colorId = 0;
+    }
+    
+    return dst;
+}
+
+Mat handDetectionModule(Mat src){
+    //PreprocessImage(src);
+    
+    vector<HandMetadata> hands = detect(src);
+    Mat dst = drawROI(src, hands);
+    // imshow("result", dst);
+    // waitKey(0);
+    return dst;
+}
+
+
+int main(int argcc, char **argv){
+    //vector<Mat> src = readSrcImages("../dataset/benchmark/rgb/", 30);
+    int count = 0;
+    string image = "10.jpg";
+    Mat src = imread("../dataset/benchmark/rgb/" + image, IMREAD_ANYCOLOR);
+    cout << "Processing Image" << endl;
+    Mat dst = handDetectionModule(src);
+    cout << "Saving Image" << endl;
+    imwrite(saveDir + image, dst);
+    std::remove("../activeDir/test.csv");
+    std::remove("../activeDir/test.jpg");
+    std::remove("../activeDir/src.jpg");
+    
+    //createDataset(500);
     return -1;
 }
+

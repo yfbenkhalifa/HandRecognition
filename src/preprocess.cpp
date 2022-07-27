@@ -39,17 +39,4 @@ void Preprocess::equalize(const Mat &input, Mat &output) {
     cvtColor(temp, output, COLOR_HSV2BGR);
 }
 
-void Preprocess::saturate(const Mat &input, Mat &output) {
 
-    Mat temp;
-    cvtColor(input, temp, COLOR_BGR2HSV);
-
-    Mat *channels = new Mat[3];
-    split(temp, channels);
-
-    equalizeHist(channels[1], channels[1]);
-
-    merge(channels, 3, temp);
-
-    cvtColor(temp, output, COLOR_HSV2BGR);
-}

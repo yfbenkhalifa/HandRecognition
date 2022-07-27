@@ -10,119 +10,50 @@
 using namespace cv;
 using namespace std;
 
-Mat Segmentation::SegmentByColor(const Mat &input) {
-    Mat converted;
-    cvtColor(input, converted, COLOR_BGR2YCrCb);
+Mat Segmentation::ClusterWithMeanShift(Mat input) {
 
-    std::vector<cv::Mat> converted_channels;
-
-    split(converted, converted_channels);
-
-    threshold(converted_channels[1], converted_channels[1], 131, 255, THRESH_TOZERO);
-    imshow("Intersection1", converted_channels[1]);
-    waitKey(0);
-    threshold(converted_channels[1], converted_channels[1], 185, 255, THRESH_TOZERO_INV);
-
-    threshold(converted_channels[1], converted_channels[1], 0, 255, THRESH_BINARY);
-
-    threshold(converted_channels[2], converted_channels[2], 80, 255, THRESH_TOZERO);
-    threshold(converted_channels[2], converted_channels[2], 135, 255, THRESH_TOZERO_INV);
-
-    threshold(converted_channels[2], converted_channels[2], 0, 255, THRESH_BINARY);
-
-    imshow("Intersection2", converted_channels[2]);
-
-    Mat intersection;
-
-    bitwise_and(converted_channels[1], converted_channels[2], intersection);
-
-    imshow("Intersection", intersection);
-    waitKey(0);
-
-    return intersection;
-}
-
-Mat Segmentation::ClusterWithMeanShift(const Mat &input) {
-
-    int resize_scale = 1;
-
-    Mat converted;
+    int resize_scale = 2;
 
     resize(input, input, Size(input.cols / resize_scale, input.rows / resize_scale));
-    cvtColor(input, converted, COLOR_BGR2YCrCb);
+    cvtColor(input, input, COLOR_BGR2HSV);
 
     vector<Sample> samples;
 
-    for (int r = 0; r < converted.rows; r += 1)
-        for (int c = 0; c < converted.cols; c += 1)
-            samples.push_back(Sample(converted, r, c));
+    for (int r = 0; r < input.rows; r += 1)
+        for (int c = 0; c < input.cols; c += 1)
+            samples.push_back(Sample(input, r, c));
 
-    MeanShift *c = new MeanShift(converted, 4, 2.5);
+    MeanShift *c = new MeanShift(input, 3, 6);
     vector<Cluster> clusters = c->cluster(samples);
 
     int n_clusters = (int)clusters.size();
 
     cout << n_clusters << endl;
 
-    // Mat temp(converted.size(), CV_8UC3);
-    // temp.setTo(0);
-
-    // for (int c = 0; c < n_clusters; c++) {
-    //     Sample *mode = &clusters[c].mode;
-    //     for (int i = 0; i < clusters[c].shifted_points.size(); i++) {
-
-    //         Sample *current = &clusters[c].shifted_points[i];
-    //         Point originalLocation(current->originalLocation[0], current->originalLocation[1]);
-
-    //         temp.at<Vec3b>(originalLocation) = Vec3b(mode->color[0], mode->color[1], mode->color[2]);
-    //     }
-    // }
-
-    // cvtColor(temp, temp, COLOR_YCrCb2BGR);
-    // imshow("Temp", temp);
-
-    Mat output(converted.size(), CV_8UC1);
+    Mat output = input.clone();
     output.setTo(0);
 
-    vector<Cluster> validClusters;
-
-    // for (int i = 0; i < clusters.size(); i++) {
-    //     Sample mode = clusters[i].mode;
-    //     if (mode.color[1] - 133 <= (173 - 133) && mode.color[2] - 77 <= (127 - 77)) {
-    //         validClusters.push_back(clusters[i]);
-    //     }
-    // }
-
-    int max_size = -1;
-    int max_index = -1;
     for (int c = 0; c < n_clusters; c++) {
-        int current_size = clusters[c].shifted_points.size();
-        if (current_size > max_size) {
-            max_index = c;
-            max_size = current_size;
-        }
-    }
-
-    validClusters.push_back(clusters[max_index]);
-
-    for (int c = 0; c < validClusters.size(); c++) {
-        Sample *mode = &validClusters[c].mode;
-        for (int i = 0; i < validClusters[c].shifted_points.size(); i++) {
-
-            Sample *current = &validClusters[c].shifted_points[i];
+        // uchar intesity = (uchar)(c * 255.0 / (n_clusters - 1));
+        Sample *mode = &clusters[c].mode;
+        for (int i = 0; i < clusters[c].shifted_points.size(); i++) {
+            // Point p1(location[0], location[1]), p2(originalLocation[0], originalLocation[1]);
+            // drawMarker(output, p1, Scalar(255, 0, 0), MARKER_SQUARE);
+            // line(output, p1, p2, Scalar(255, 0, 0));
+            Sample *current = &clusters[c].shifted_points[i];
             Point originalLocation(current->originalLocation[0], current->originalLocation[1]);
-
-            output.at<uchar>(originalLocation) = 255;
+            Point location(mode->location[0], mode->location[1]);
+            // drawMarker(output, location, Scalar(255, 0, 0), MARKER_STAR / 2);
+            output.at<Vec3b>(originalLocation) = Vec3b(mode->color[0], mode->color[1], mode->color[2]);
         }
     }
 
-    auto erosion_type = MORPH_ELLIPSE;
-    auto erosion_size = 7;
-    Mat element = getStructuringElement(erosion_type, Size(2 * erosion_size + 1, 2 * erosion_size + 1), Point(erosion_size, erosion_size));
-    dilate(output, output, element);
-    // erode(output, output, element);
-    // erode(output, output, element);
-    // dilate(output, output, element);
+    cvtColor(output, output, COLOR_HSV2BGR);
+    resize(output, output, Size(input.cols, input.rows));
+    imshow("Output", output);
+    waitKey(0);
+
+    // imshow("Output", output);
 
     return output;
 }
