@@ -49,7 +49,10 @@ class Image{
         void cutBackground();
 
 };
+
+
 string vectorToString(vector<int> vec);
+vector<string> readPath(char *folderPath);
 bool computeMask(Mat mask);
 // Image readImageFiles(char* folderPath, int id);
 vector<Mat> readSrcImages(char *folderPath, int maxSize);
