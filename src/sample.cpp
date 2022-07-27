@@ -19,3 +19,13 @@ double Sample::distanceFrom(const Sample &other) const { return sqrt(euclidean_d
 
 double Sample::colorDistanceFrom(const Sample &other) const { return euclidean_distance(color, other.color); }
 double Sample::locationDistanceFrom(const Sample &other) const { return euclidean_distance(location, other.location); }
+
+bool Sample::colorInRange(const vector<double> &lower_bound, const vector<double> &upper_bound) const {
+    for (int i = 0; i < color.size(); i++) {
+        if (color[i] < lower_bound[i])
+            return false;
+        if (color[i] > upper_bound[i])
+            return false;
+    }
+    return true;
+}

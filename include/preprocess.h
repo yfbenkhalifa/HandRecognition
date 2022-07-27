@@ -12,7 +12,7 @@ class Preprocess {
     static Mat smoothImage(Mat, Mat, double);
 
     // Returns sharpened image using derivative filter with given kernel
-    static Mat sharpenImage(Mat, Mat, double);
+    static void sharpenImage(const Mat &input, Mat &output);
 
     static void equalize(const Mat &input, Mat &output);
 

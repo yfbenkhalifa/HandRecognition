@@ -39,15 +39,21 @@ Sample MeanShift::shift_point(const Sample &point) {
     int y2 = min(max((int)point.location[1] + spatial_bandwidth, 0), image.rows - 1);
     Rect roi(x1, y1, x2 - x1, y2 - y1);
 
+    if (!(0 <= roi.x && 0 <= roi.width && roi.x + roi.width <= image.cols && 0 <= roi.y && 0 <= roi.height && roi.y + roi.height <= image.rows)) {
+        cout << point.originalLocation[0] << "-" << point.originalLocation[1] << endl;
+        cout << point.location[0] << "-" << point.location[1] << endl;
+        return point;
+    }
+
     Mat imageRoi = image(roi);
 
     for (int r = 0; r < imageRoi.rows; r++)
         for (int c = 0; c < imageRoi.cols; c++) {
             Sample current = Sample(imageRoi, r, c, x1, y1);
             double colorDistance = point.colorDistanceFrom(current);
-            // double locationDistance = point.locationDistanceFrom(current);
+            double locationDistance = point.locationDistanceFrom(current);
 
-            double weight = gaussian_kernel(colorDistance, color_bandwidth); // colorDistance < color_bandwidth ? 1 : 0;
+            double weight = gaussian_kernel(colorDistance, color_bandwidth * 2); // colorDistance < color_bandwidth ? 1 : 0;
 
             if (weight == 0)
                 continue;
@@ -71,7 +77,7 @@ void MeanShift::meanshiftSinglePoint(const Sample &point) {
         double color_shift_distance = point_new.colorDistanceFrom(prev_point);
         double location_shift_distance = point_new.locationDistanceFrom(prev_point);
 
-        if (color_shift_distance < MIN_COLOR_SHIFT || location_shift_distance < MIN_LOCATION_SHIFT)
+        if (color_shift_distance < MIN_COLOR_SHIFT && location_shift_distance < MIN_LOCATION_SHIFT)
             break;
 
         prev_point = point_new;
@@ -122,7 +128,7 @@ vector<Point> MeanShift::grow(const Sample *shifted_points, const vector<Point> 
             int nIndex = index + neighbors[k][0] + neighbors[k][1] * image.cols;
             if (nIndex >= 0 && (nIndex < image.rows * image.cols) && (mask[nIndex] < 0)) {
                 double color_distance = shifted_points[nIndex].colorDistanceFrom(shifted_points[index]);
-                if (color_distance < color_bandwidth) {
+                if (color_distance < color_bandwidth / 3) {
                     mask[nIndex] = clusterIndex;
                     Point new_point(points[i]);
                     new_point.x += neighbors[k][0];

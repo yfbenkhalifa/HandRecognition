@@ -95,4 +95,5 @@ class Sample {
     double distanceFrom(const Sample &other) const;
     double colorDistanceFrom(const Sample &other) const;
     double locationDistanceFrom(const Sample &other) const;
+    bool colorInRange(const vector<double> &lower_bound, const vector<double> &upper_bound) const;
 };

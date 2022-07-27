@@ -13,10 +13,10 @@ double evaluateMask(const Mat &gt_mask, const Mat &est_mask) {
     double total_gt = countNonZero(gt_mask);
     double total_error = countNonZero(error);
 
-    imshow("Mask", est_mask);
-    imshow("GT Mask", gt_mask);
-    imshow("Error", error);
-    waitKey(0);
+    // imshow("Mask", est_mask);
+    // imshow("GT Mask", gt_mask);
+    // imshow("Error", error);
+    // waitKey(0);
 
     return total_error / total_gt;
 }

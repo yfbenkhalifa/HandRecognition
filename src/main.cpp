@@ -1,4 +1,5 @@
 #include "common.h"
+#include "dataset.h"
 #include "evaluation.h"
 #include "preprocess.h"
 #include "segmentation.h"
@@ -27,11 +28,30 @@ using namespace cv;
 //     return result;
 // }
 
+// void laplacian(const Mat &input) {
+//     Mat src, src_gray, dst;
+//     int kernel_size = 3;
+//     int scale = 1;
+//     int delta = 0;
+//     int ddepth = CV_16S;
+
+//     // Reduce noise by blurring with a Gaussian filter ( kernel size = 3 )
+//     GaussianBlur(input, src, Size(3, 3), 0, 0, BORDER_DEFAULT);
+//     cvtColor(src, src_gray, COLOR_BGR2GRAY); // Convert the image to grayscale
+//     Mat abs_dst;
+//     Laplacian(src_gray, dst, ddepth, kernel_size, scale, delta, BORDER_DEFAULT);
+//     // converting back to CV_8U
+//     convertScaleAbs(dst, abs_dst);
+
+//     imshow("Laplacian", abs_dst);
+// }
+
 // int main(int argcc, char **argv) {
 //     string imagesPath = "../dataset/rgb/*";
 
 //     vector<std::string> files;
-//     glob(imagesPath, files);
+//     files = {"../dataset/rgb/08.jpg"};
+//     // glob(imagesPath, files);
 
 //     for (const string &file : files) {
 //         cout << file << endl;
@@ -41,6 +61,17 @@ using namespace cv;
 //         // imshow("Input", input);
 
 //         // GaussianBlur(input, preprocessed, Size(7, 7), 10);
+//         // Preprocess::saturate(input, preprocessed);
+//         Mat temp;
+//         bilateralFilter(input, preprocessed, -1, 25, 10);
+//         // Preprocess::sharpenImage(preprocessed, preprocessed);
+//         Preprocess::equalize(preprocessed, preprocessed);
+//         // Preprocess::saturate(preprocessed, preprocessed);
+
+//         // imshow("Preprocessed", preprocessed);
+
+//         // laplacian(preprocessed);
+//         // waitKey();
 
 //         string det_path = "../dataset/det/";
 //         string det_file = file.substr(15, file.length() - 19);
@@ -68,7 +99,12 @@ using namespace cv;
 
 //             // imshow("Preprocessed", preprocessed);
 
-//             Mat output = Segmentation::ClusterWithMeanShift(roi);
+//             Mat color_mask = Segmentation::GetSkinMask(roi);
+//             cvtColor(color_mask, color_mask, COLOR_GRAY2BGR);
+
+//             bitwise_and(roi, color_mask, roi);
+
+//             Mat output = Segmentation::ClusterWithMeanShift(roi, 4, 2);
 
 //             Mat mask_roi = mask(rectangles[i]);
 //             output.copyTo(mask_roi);
