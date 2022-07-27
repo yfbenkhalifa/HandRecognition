@@ -1,15 +1,13 @@
 #include "common.h"
+#include "evaluation.h"
 #include "preprocess.h"
 #include "segmentation.h"
+#include <dirent.h>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
-
-#include "dataset.cpp"
-#include <dirent.h>
-#include <iostream>
 #include <vector>
-#include <fstream>
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -18,28 +16,72 @@
 using namespace std;
 using namespace cv;
 
-int mainClustering(int argcc, char **argv) {
-    string imagesPath = "../dataset/rgb/*";
+// std::vector<int> explode(std::string const &s, char delim) {
+//     std::vector<int> result;
+//     std::istringstream iss(s);
 
-    vector<std::string> files;
-    glob(imagesPath, files);
+//     for (std::string token; std::getline(iss, token, delim);) {
+//         result.push_back(stoi(std::move(token)));
+//     }
 
-    for (const string &file : files) {
-        cout << file << endl;
-        Mat input = imread(file), image;
+//     return result;
+// }
 
-        GaussianBlur(input, image, Size(7, 7), 10);
-        // Preprocess::equalize(image, image);
-        imshow("Original", input);
-        imshow("Equalized", image);
-        waitKey(0);
+// int main(int argcc, char **argv) {
+//     string imagesPath = "../dataset/rgb/*";
 
-        // medianBlur(input, image, 7);
-        // bilateralFilter(input, image, 25, 150, 150);
-        // GaussianBlur(input, image, Size(7, 7), 10);
-        Mat output = Segmentation::ClusterWithMeanShift(image);
-    }
-}
+//     vector<std::string> files;
+//     glob(imagesPath, files);
+
+//     for (const string &file : files) {
+//         cout << file << endl;
+//         Mat input = imread(file);
+//         Mat preprocessed = input.clone();
+
+//         // imshow("Input", input);
+
+//         // GaussianBlur(input, preprocessed, Size(7, 7), 10);
+
+//         string det_path = "../dataset/det/";
+//         string det_file = file.substr(15, file.length() - 19);
+//         det_path.append(det_file).append(".txt");
+//         ifstream myfile(det_path);
+
+//         vector<Rect> rectangles;
+//         if (myfile.is_open()) {
+//             string line;
+//             while (getline(myfile, line)) {
+//                 vector<int> params = explode(line, '\t');
+//                 rectangles.push_back(Rect(params[0], params[1], params[2], params[3]));
+//             }
+//             myfile.close();
+//         }
+
+//         Mat mask(input.size(), CV_8UC1);
+//         mask.setTo(0);
+
+//         for (int i = 0; i < rectangles.size(); i++) {
+//             Mat roi = preprocessed(rectangles[i]);
+
+//             // bilateralFilter(roi, preprocessed, 7, 20, 150);
+//             // Preprocess::saturate(preprocessed, preprocessed);
+
+//             // imshow("Preprocessed", preprocessed);
+
+//             Mat output = Segmentation::ClusterWithMeanShift(roi);
+
+//             Mat mask_roi = mask(rectangles[i]);
+//             output.copyTo(mask_roi);
+//         }
+
+//         string mask_path = "../dataset/mask/";
+//         string mask_file = file.substr(15, file.length() - 19);
+//         mask_path.append(mask_file).append(".png");
+//         Mat gt_mask = imread(mask_path, IMREAD_GRAYSCALE);
+
+//         cout << "Error: " << evaluateMask(gt_mask, mask) << endl;
+//     }
+// }
 
 int main(int argcc, char **argv) {
     vector<Mat> images;
@@ -59,7 +101,7 @@ int main(int argcc, char **argv) {
             //cout << image.id << endl;
             //imshow("hand", mask);
             //waitKey(0);
-            string saveFileName = "../dataset/processed/" + to_string(image.id) + ".jpg";  
+            string saveFileName = "../dataset/processed/" + to_string(image.id) + ".jpg";
             imwrite(saveFileName, mask);
         }
         closedir(dir);

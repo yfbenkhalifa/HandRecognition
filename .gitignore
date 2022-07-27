@@ -1,4 +1,5 @@
 build
 .vscode
 dataset
+output
 *.clang-format
