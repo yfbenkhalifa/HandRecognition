@@ -5,6 +5,9 @@
 \usepackage[table]{xcolor}
 \usepackage{fullpage}
 \usepackage[bottom]{footmisc}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
 \usepackage{lastpage}
 \usepackage{enumitem}
 \usepackage{fancyhdr}
@@ -39,3 +42,12 @@
 \numberwithin{equation}{section}
 \numberwithin{theorem}{section}
 \numberwithin{definition}{section}
+
+\makeatletter
+\newcommand{\chapterauthor}[1]{%
+  {\parindent0pt\vspace*{-20pt}%
+  \linespread{1.1}\large\scshape#1%
+  \par\nobreak\vspace*{5pt}}
+  \@afterheading%
+}
+\makeatother
