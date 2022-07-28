@@ -1,8 +1,6 @@
 #include "MeanShift.h"
 #include "sample.h"
 #include <algorithm>
-#include <chrono>
-#include <execution>
 #include <iostream>
 #include <list>
 #include <math.h>
@@ -35,10 +33,10 @@ Sample MeanShift::shift_point(const Sample &point) {
     int skipped = 0;
     double total_weight = 0;
 
-    int x1 = max((int)point.location[0] - spatial_bandwidth, 0);
-    int x2 = min((int)point.location[0] + spatial_bandwidth, image.cols - 1);
-    int y1 = max((int)point.location[1] - spatial_bandwidth, 0);
-    int y2 = min((int)point.location[1] + spatial_bandwidth, image.rows - 1);
+    int x1 = min(max((int)point.location[0] - spatial_bandwidth, 0), image.cols - 1);
+    int x2 = min(max((int)point.location[0] + spatial_bandwidth, 0), image.cols - 1);
+    int y1 = min(max((int)point.location[1] - spatial_bandwidth, 0), image.rows - 1);
+    int y2 = min(max((int)point.location[1] + spatial_bandwidth, 0), image.rows - 1);
     Rect roi(x1, y1, x2 - x1, y2 - y1);
 
     if (!(0 <= roi.x && 0 <= roi.width && roi.x + roi.width <= image.cols && 0 <= roi.y && 0 <= roi.height && roi.y + roi.height <= image.rows)) {
@@ -71,7 +69,7 @@ Sample MeanShift::shift_point(const Sample &point) {
     return shifted_point;
 }
 
-Sample MeanShift::meanshiftSinglePoint(const Sample &point) {
+void MeanShift::meanshiftSinglePoint(const Sample &point) {
     Sample prev_point(point);
     Sample point_new = shift_point(point);
     int i = 0;
@@ -86,12 +84,14 @@ Sample MeanShift::meanshiftSinglePoint(const Sample &point) {
         point_new = shift_point(point_new);
     }
 
-    return point_new;
+    int index = point_new.originalLocation[0] + point_new.originalLocation[1] * image.cols;
+    shifted_points[index] = point_new;
 }
 
-Sample *MeanShift::meanshift(const vector<Sample> &_points) {
+void MeanShift::meanshift(const vector<Sample> &_points) {
 
-    Sample *shifted_points = new Sample[image.cols * image.rows];
+    shifted_points = new Sample[image.cols * image.rows];
+    vector<thread> threads;
     int current_progress = 10;
     double progress = 0;
     cout << "Progress: ";
@@ -109,22 +109,11 @@ Sample *MeanShift::meanshift(const vector<Sample> &_points) {
                     current_progress = (int)progress - ((int)progress % 10) + 10;
                 }
 
-        Sample point_new = meanshiftSinglePoint(point);
-        // point_new += pruneSample;
-        // Sample point_new = meanshiftSinglePoint(point);
-        int index = point_new.originalLocation[0] + point_new.originalLocation[1] * image.cols;
-        shifted_points[index] = point_new;
-
-        shift_lock.lock();
-        progress += 100.0 / _points.size();
-        if (progress > current_progress) {
-            cout << "Progress: " << current_progress << "%" << endl;
-            current_progress = (int)progress - ((int)progress % 10) + 10;
+            } else {
+                threads[0].join();
+                threads.erase(threads.begin());
+            }
         }
-        shift_lock.unlock();
-        // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        // std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
-        // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     });
     cout << endl;
 
@@ -190,20 +179,13 @@ vector<Cluster> MeanShift::cluster(const Sample *shifted_points) {
             clusters.push_back(newCluster);
         }
     }
+    for (int i = 0; i < clusters.size(); i++)
+        clusters[i].mode = clusters[i].mode / clusters[i].shifted_points.size();
 
-    vector<Cluster> validClusters;
-
-    for (int i = 0; i < clusters.size(); i++) {
-        if (clusters[i].shifted_points.size() > 50) {
-            clusters[i].mode = clusters[i].mode / clusters[i].shifted_points.size();
-            validClusters.push_back(clusters[i]);
-        }
-    }
-
-    return validClusters;
+    return clusters;
 }
 
 vector<Cluster> MeanShift::cluster(const std::vector<Sample> &points) {
-    Sample *shifted_points = meanshift(points);
+    meanshift(points);
     return cluster(shifted_points);
 }

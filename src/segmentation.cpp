@@ -82,7 +82,7 @@ Mat Segmentation::ClusterWithMeanShift(const Mat &input, const int &spatial_band
     Mat converted;
 
     resize(input, input, Size(input.cols / resize_scale, input.rows / resize_scale));
-    cvtColor(input, input, COLOR_BGR2HSV);
+    cvtColor(input, converted, COLOR_BGR2YCrCb);
 
     vector<Sample> samples;
 
@@ -173,9 +173,8 @@ Mat Segmentation::ClusterWithMeanShift(const Mat &input, const int &spatial_band
 
             Sample *current = &validClusters[c].shifted_points[i];
             Point originalLocation(current->originalLocation[0], current->originalLocation[1]);
-            Point location(mode->location[0], mode->location[1]);
-            // drawMarker(output, location, Scalar(255, 0, 0), MARKER_STAR / 2);
-            output.at<Vec3b>(originalLocation) = Vec3b(mode->color[0], mode->color[1], mode->color[2]);
+
+            output.at<uchar>(originalLocation) = 255;
         }
     }
 

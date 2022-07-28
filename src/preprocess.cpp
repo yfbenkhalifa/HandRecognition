@@ -39,6 +39,7 @@ void Preprocess::equalize(const Mat &input, Mat &output) {
     cvtColor(temp, output, COLOR_YCrCb2BGR);
 }
 
+void Preprocess::saturate(const Mat &input, Mat &output) {
 
     Mat temp;
     cvtColor(input, temp, COLOR_BGR2HSV);

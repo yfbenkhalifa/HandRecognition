@@ -14,6 +14,8 @@ class Preprocess {
     // Returns sharpened image using derivative filter with given kernel
     static void sharpenImage(const Mat &input, Mat &output);
 
+    static void saturate(const Mat &input, Mat &output);
+
     static void equalize(const Mat &input, Mat &output);
 
     /* Utility Functions */

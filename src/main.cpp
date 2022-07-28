@@ -2,18 +2,15 @@
 #include "dataset.h"
 #include "evaluation.h"
 #include "preprocess.h"
+#include "segmentation.h"
+#include <dirent.h>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <stdio.h>
 #include <string>
-#include <stdexcept>
-#include <stdio.h>
-#include "dataset.h"
-#include <dirent.h>
-#include <iostream>
 #include <vector>
-#include <fstream>
 
 #include <iostream>
 
@@ -29,7 +26,18 @@ int detectOffsetX, detectOffsetY;
 int maxHands = 4;
 double scoreThreshold = 0.95;
 
-vector<Scalar> colors = {(255,255,0), (255,0,0), (0,0,255), (0,255,0), (255,0,255), (0,255,255), (150,200,50)};
+vector<Scalar> colors = {(255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 0, 255), (0, 255, 255), (150, 200, 50)};
+
+std::vector<int> explode(std::string const &s, char delim) {
+    std::vector<int> result;
+    std::istringstream iss(s);
+
+    for (std::string token; std::getline(iss, token, delim);) {
+        result.push_back(stoi(std::move(token)));
+    }
+
+    return result;
+}
 
 int mainClustering(int argcc, char **argv) {
     string imagesPath = "../dataset/rgb/*";
@@ -100,7 +108,7 @@ int mainClustering(int argcc, char **argv) {
 
             mask_roi |= output;
 
-            rectangles_area += rectangles[i].area(); 
+            rectangles_area += rectangles[i].area();
 
             // imshow("Mask", mask);
             // waitKey();
@@ -127,71 +135,69 @@ int mainClustering(int argcc, char **argv) {
 
 string exec(string command) {
 
-   char buffer[128];
-   string result = "";
+    char buffer[128];
+    string result = "";
 
-   // Open pipe to file
-   FILE* pipe = popen(command.c_str(), "r");
-   if (!pipe) {
-      return "popen failed!";
-   }
+    // Open pipe to file
+    FILE *pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        return "popen failed!";
+    }
 
-   // read till end of process:
-   while (!feof(pipe)) {
+    // read till end of process:
+    while (!feof(pipe)) {
 
-      // use buffer to read and add to result
-      if (fgets(buffer, 128, pipe) != NULL)
-         result += buffer;
-   }
+        // use buffer to read and add to result
+        if (fgets(buffer, 128, pipe) != NULL)
+            result += buffer;
+    }
 
-   pclose(pipe);
-   return result;
+    pclose(pipe);
+    return result;
 }
 
 vector<HandMetadata> detect(Mat src) {
-    //Takes as argument the image path and reads it 
-    //Mat src = imread(srcPath);
-    //Select detection parameters
+    // Takes as argument the image path and reads it
+    // Mat src = imread(srcPath);
+    // Select detection parameters
     imwrite(activeDir + "src.jpg", src);
 
     string command = pytohnCommand;
     string result = exec(command);
     cout << result << endl;
     vector<int> handROICoords = readCSV(activeDir + "test.csv");
-    //Perform detection
+    // Perform detection
     vector<HandMetadata> hands;
-    for(int i=0; i<handROICoords.size(); i+=4){
-        vector<int> vec {&handROICoords[i], &handROICoords[i+4]};
+    for (int i = 0; i < handROICoords.size(); i += 4) {
+        vector<int> vec{&handROICoords[i], &handROICoords[i + 4]};
         HandMetadata temp = loadHandMetadata(vec);
         hands.push_back(temp);
     }
-    
-    //cout << "Found " + to_string(hands.size()) + " hand" << endl;
-    
-    
+
+    // cout << "Found " + to_string(hands.size()) + " hand" << endl;
+
     return hands;
 }
 
-Mat drawROI(Mat src, vector<HandMetadata> hands){
+Mat drawROI(Mat src, vector<HandMetadata> hands) {
     Mat dst = src.clone();
     int colorId = 0;
     int thickness = 2;
-    for(auto hand : hands){
+    for (auto hand : hands) {
         Point p1(hand.PosX, hand.PosY);
         Point p2(hand.PosX + hand.Width, hand.PosY + hand.Height);
-        rectangle(dst, p1, p2,
-                colors.at(colorId),
-                thickness, LINE_8);
+        rectangle(dst, p1, p2, colors.at(colorId), thickness, LINE_8);
         colorId += 1;
-        if(colorId == colors.size()) colorId = 0;
+        if (colorId == colors.size())
+            colorId = 0;
     }
-    
+
     return dst;
 }
 
-Mat handDetectionModule(Mat src){
-    //PreprocessImage(src);
-    
+Mat handDetectionModule(Mat src) {
+    // PreprocessImage(src);
+
     vector<HandMetadata> hands = detect(src);
     Mat dst = drawROI(src, hands);
     // imshow("result", dst);
@@ -199,12 +205,11 @@ Mat handDetectionModule(Mat src){
     return dst;
 }
 
-
-int main(int argcc, char **argv){
-    //vector<Mat> src = readSrcImages("../dataset/benchmark/rgb/", 30);
+int main(int argcc, char **argv) {
+    // vector<Mat> src = readSrcImages("../dataset/benchmark/rgb/", 30);
     int count = 0;
     string image = "10.jpg";
-    Mat src = imread("../dataset/benchmark/rgb/" + image, IMREAD_ANYCOLOR);
+    Mat src = imread("../dataset/rgb/" + image, IMREAD_ANYCOLOR);
     cout << "Processing Image" << endl;
     Mat dst = handDetectionModule(src);
     cout << "Saving Image" << endl;
@@ -212,8 +217,7 @@ int main(int argcc, char **argv){
     std::remove("../activeDir/test.csv");
     std::remove("../activeDir/test.jpg");
     std::remove("../activeDir/src.jpg");
-    
-    //createDataset(500);
+
+    // createDataset(500);
     return -1;
 }
-
