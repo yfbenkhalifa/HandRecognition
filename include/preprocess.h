@@ -16,8 +16,6 @@ class Preprocess {
 
     static void equalize(const Mat &input, Mat &output);
 
-    static void saturate(const Mat &input, Mat &output);
-
     /* Utility Functions */
 
     // Returns true if the pixel BGR intensity is within the given thresholds
