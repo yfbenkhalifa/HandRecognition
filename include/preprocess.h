@@ -24,4 +24,6 @@ class Preprocess {
     static bool isWithin(Vec3b, Vec3b, Vec3b);
 
     void sharpen(Mat);
+
+    void laplacian(const Mat &input, Mat &output);
 };

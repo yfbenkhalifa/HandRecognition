@@ -53,7 +53,7 @@ Sample MeanShift::shift_point(const Sample &point) {
             double colorDistance = point.colorDistanceFrom(current);
             double locationDistance = point.locationDistanceFrom(current);
 
-            double weight = gaussian_kernel(colorDistance, color_bandwidth * 2); // colorDistance < color_bandwidth ? 1 : 0;
+            double weight = gaussian_kernel(colorDistance, color_bandwidth); // colorDistance < color_bandwidth ? 1 : 0;
 
             if (weight == 0)
                 continue;
@@ -94,6 +94,7 @@ void MeanShift::meanshift(const vector<Sample> &_points) {
     vector<thread> threads;
     int current_progress = 10;
     double progress = 0;
+    cout << "Progress: ";
     for_each(_points.begin(), _points.end(), [&](auto &&point) {
         bool started = false;
         while (!started) {
@@ -103,7 +104,8 @@ void MeanShift::meanshift(const vector<Sample> &_points) {
 
                 progress += 100.0 / _points.size();
                 if (progress > current_progress) {
-                    cout << "Progress: " << current_progress << "%" << endl;
+                    cout << current_progress << "%"
+                         << "\t" << flush;
                     current_progress = (int)progress - ((int)progress % 10) + 10;
                 }
 
@@ -113,6 +115,7 @@ void MeanShift::meanshift(const vector<Sample> &_points) {
             }
         }
     });
+    cout << endl;
 
     while (threads.size() > 0) {
         threads[0].join();
@@ -128,7 +131,7 @@ vector<Point> MeanShift::grow(const Sample *shifted_points, const vector<Point> 
             int nIndex = index + neighbors[k][0] + neighbors[k][1] * image.cols;
             if (nIndex >= 0 && (nIndex < image.rows * image.cols) && (mask[nIndex] < 0)) {
                 double color_distance = shifted_points[nIndex].colorDistanceFrom(shifted_points[index]);
-                if (color_distance < color_bandwidth / 3) {
+                if (color_distance < color_bandwidth) {
                     mask[nIndex] = clusterIndex;
                     Point new_point(points[i]);
                     new_point.x += neighbors[k][0];

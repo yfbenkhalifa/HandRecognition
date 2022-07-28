@@ -1,6 +1,8 @@
 #include "common.h"
 #include "dataset.h"
+#include "evaluation.h"
 #include "preprocess.h"
+#include "segmentation.h"
 #include <dirent.h>
 #include <filesystem>
 #include <fstream>
@@ -24,71 +26,110 @@ int detectOffsetX, detectOffsetY;
 int maxHands = 4;
 double scoreThreshold = 0.95;
 
-// void laplacian(const Mat &input) {
-//     Mat src, src_gray, dst;
-//     int kernel_size = 3;
-//     int scale = 1;
-//     int delta = 0;
-//     int ddepth = CV_16S;
+std::vector<int> explode(std::string const &s, char delim) {
+    std::vector<int> result;
+    std::istringstream iss(s);
 
-//     // Reduce noise by blurring with a Gaussian filter ( kernel size = 3 )
-//     GaussianBlur(input, src, Size(3, 3), 0, 0, BORDER_DEFAULT);
-//     cvtColor(src, src_gray, COLOR_BGR2GRAY); // Convert the image to grayscale
-//     Mat abs_dst;
-//     Laplacian(src_gray, dst, ddepth, kernel_size, scale, delta, BORDER_DEFAULT);
-//     // converting back to CV_8U
-//     convertScaleAbs(dst, abs_dst);
+    for (std::string token; std::getline(iss, token, delim);) {
+        result.push_back(stoi(std::move(token)));
+    }
 
-//     imshow("Laplacian", abs_dst);
-// }
+    return result;
+}
 
-// int main(int argcc, char **argv) {
-//     string imagesPath = "../dataset/rgb/*";
+int mainClustering(int argcc, char **argv) {
+    string imagesPath = "../dataset/rgb/*";
 
-//     vector<std::string> files;
-//     files = {"../dataset/rgb/08.jpg"};
-//     // glob(imagesPath, files);
+    vector<std::string> files;
+    glob(imagesPath, files);
 
-//         // GaussianBlur(input, preprocessed, Size(7, 7), 10);
-//         // Preprocess::saturate(input, preprocessed);
-//         Mat temp;
-//         bilateralFilter(input, preprocessed, -1, 25, 10);
-//         // Preprocess::sharpenImage(preprocessed, preprocessed);
-//         Preprocess::equalize(preprocessed, preprocessed);
-//         // Preprocess::saturate(preprocessed, preprocessed);
+    vector<double> errors;
 
-//         // imshow("Preprocessed", preprocessed);
+    for (const string &file : files) {
+        cout << file << endl;
+        Mat input = imread(file);
+        Mat preprocessed = input.clone();
 
-//         // laplacian(preprocessed);
-//         // waitKey();
+        // imshow("Input", input);
 
-//         for (int i = 0; i < rectangles.size(); i++) {
-//             Mat roi = preprocessed(rectangles[i]);
+        // GaussianBlur(input, preprocessed, Size(7, 7), 10);
+        // Preprocess::saturate(input, preprocessed);
+        Mat temp;
+        bilateralFilter(input, preprocessed, -1, 25, 10);
+        // Preprocess::sharpenImage(preprocessed, preprocessed);
+        // Preprocess::equalize(preprocessed, preprocessed);
+        // Preprocess::saturate(preprocessed, preprocessed);
 
-//             // bilateralFilter(roi, preprocessed, 7, 20, 150);
-//             // Preprocess::saturate(preprocessed, preprocessed);
+        // imshow("Preprocessed", preprocessed);
 
-//             // imshow("Preprocessed", preprocessed);
+        // laplacian(preprocessed);
+        // waitKey();
 
-//             Mat color_mask = Segmentation::GetSkinMask(roi);
-//             cvtColor(color_mask, color_mask, COLOR_GRAY2BGR);
+        string det_path = "../dataset/det/";
+        string det_file = file.substr(15, file.length() - 19);
+        det_path.append(det_file).append(".txt");
+        ifstream myfile(det_path);
 
-//             bitwise_and(roi, color_mask, roi);
+        vector<Rect> rectangles;
+        if (myfile.is_open()) {
+            string line;
+            while (getline(myfile, line)) {
+                vector<int> params = explode(line, '\t');
+                if (params.size() < 4)
+                    params = explode(line, ' ');
+                rectangles.push_back(Rect(params[0], params[1], params[2], params[3]));
+            }
+            myfile.close();
+        }
 
-//             Mat output = Segmentation::ClusterWithMeanShift(roi, 4, 2);
+        Mat mask(input.size(), CV_8UC1);
+        mask.setTo(0);
 
-//             Mat mask_roi = mask(rectangles[i]);
-//             output.copyTo(mask_roi);
-//         }
+        int rectangles_area = 0;
 
-//         string mask_path = "../dataset/mask/";
-//         string mask_file = file.substr(15, file.length() - 19);
-//         mask_path.append(mask_file).append(".png");
-//         Mat gt_mask = imread(mask_path, IMREAD_GRAYSCALE);
+        for (int i = 0; i < rectangles.size(); i++) {
+            Mat roi = preprocessed(rectangles[i]);
+            Mat mask_roi = mask(rectangles[i]);
 
-//         cout << "Error: " << evaluateMask(gt_mask, mask) << endl;
-//     }
-// }
+            // bilateralFilter(roi, preprocessed, 7, 20, 150);
+            // Preprocess::saturate(preprocessed, preprocessed);
+
+            // imshow("Preprocessed", preprocessed);
+
+            Mat color_mask = Segmentation::GetSkinMask(roi);
+            // color_mask.copyTo(mask_roi);
+            cvtColor(color_mask, color_mask, COLOR_GRAY2BGR);
+
+            bitwise_and(roi, color_mask, roi);
+
+            Mat output = Segmentation::ClusterWithMeanShift(roi, 4, 6);
+
+            mask_roi |= output;
+
+            rectangles_area += rectangles[i].area(); 
+
+            // imshow("Mask", mask);
+            // waitKey();
+        }
+
+        string mask_path = "../dataset/mask/";
+        string mask_file = file.substr(15, file.length() - 19);
+        mask_path.append(mask_file).append(".png");
+        Mat gt_mask = imread(mask_path, IMREAD_GRAYSCALE);
+
+        double error = evaluateMask(gt_mask, mask) / rectangles_area;
+
+        errors.push_back(error);
+
+        cout << "Error: " << error << endl;
+    }
+    double avg_error = 0;
+    for (auto &error : errors)
+        avg_error += error;
+    avg_error /= errors.size();
+    cout << "ERRORE MEDIO: " << avg_error << endl;
+    return 0;
+}
 
 vector<Scalar> colors = {(255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 0, 255), (0, 255, 255), (150, 200, 50)};
 
@@ -167,7 +208,7 @@ int main(int argcc, char **argv) {
     // vector<Mat> src = readSrcImages("../dataset/benchmark/rgb/", 30);
     int count = 0;
     string image = "10.jpg";
-    Mat src = imread("../dataset/benchmark/rgb/" + image, IMREAD_ANYCOLOR);
+    Mat src = imread("../dataset/rgb/" + image, IMREAD_ANYCOLOR);
     cout << "Processing Image" << endl;
     Mat dst = handDetectionModule(src);
     cout << "Saving Image" << endl;

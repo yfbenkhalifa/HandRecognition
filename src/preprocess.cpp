@@ -65,3 +65,19 @@ void Preprocess::sharpenImage(const Mat &input, Mat &output) {
     GaussianBlur(input, blurry, Size(), sigma);
     addWeighted(input, 1 + amount, blurry, -amount, 0, output);
 }
+
+void Preprocess::laplacian(const Mat &input, Mat &output) {
+    Mat src, src_gray, dst;
+    int kernel_size = 3;
+    int scale = 1;
+    int delta = 0;
+    int ddepth = CV_16S;
+
+    // Reduce noise by blurring with a Gaussian filter ( kernel size = 3 )
+    GaussianBlur(input, src, Size(3, 3), 0, 0, BORDER_DEFAULT);
+    cvtColor(src, src_gray, COLOR_BGR2GRAY); // Convert the image to grayscale
+
+    Laplacian(src_gray, output, ddepth, kernel_size, scale, delta, BORDER_DEFAULT);
+    // converting back to CV_8U
+    convertScaleAbs(dst, output);
+}
