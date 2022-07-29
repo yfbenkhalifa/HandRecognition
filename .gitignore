@@ -3,3 +3,5 @@ build
 dataset
 output
 *.clang-format
+models
+activeDir

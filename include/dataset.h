@@ -1,6 +1,7 @@
-#include "preprocess.h"
 #include "common.h"
+#include "preprocess.h"
 #include <dirent.h>
+
 
 using std::cin;
 using std::cout;
@@ -9,9 +10,8 @@ using std::vector;
 
 using namespace std;
 
-class HandMetadata
-{
-public:
+class HandMetadata {
+  public:
     int PosX;
     int PosY;
     int Width;
@@ -22,11 +22,12 @@ public:
 
     HandMetadata();
     void initBoundingBox();
+
+    Rect getBoundingBox() { return Rect(PosX, PosY, Width, Height); }
 };
 
-class Image
-{
-public:
+class Image {
+  public:
     int id;
     string jpgFileName;
     string maskFileName;
@@ -52,9 +53,8 @@ public:
     void cutBackground();
 };
 
-class Dataset
-{
-public:
+class Dataset {
+  public:
     static string vectorToString(vector<int> vec);
     static vector<string> readPath(char *folderPath);
     static bool computeMask(Mat mask);

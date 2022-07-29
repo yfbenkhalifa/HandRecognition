@@ -53,12 +53,22 @@ void Preprocess::smooth(const Mat &input, Mat &output)
     GaussianBlur(input, output, Size(3, 3), 0, 0, BORDER_DEFAULT);
 }
 
-void Preprocess::sharpenImage(const Mat &input, Mat &output)
-{
-    Mat filter;
-    int n = 5;
-    filter = (Mat_<char>(3, 3) << 0, -1, 0, -1, n, -1, 0, -1, 0);
-    filter2D(input, output, input.depth(), filter);
+void Preprocess::sharpenImage(const Mat &input, Mat &output) {
+    Mat temp;
+    cvtColor(input, temp, COLOR_BGR2HSV);
+
+    Mat *channels = new Mat[3];
+    split(temp, channels);
+
+    double sigma = 6, amount = 4;
+    Mat blurry;
+
+    GaussianBlur(channels[1], blurry, Size(), sigma);
+    addWeighted(channels[1], 1 + amount, blurry, -amount, 0, channels[1]);
+
+    merge(channels, 3, temp);
+
+    cvtColor(temp, output, COLOR_HSV2BGR);
 }
 
 void Preprocess::fixGamma(const Mat &input, Mat &output)
