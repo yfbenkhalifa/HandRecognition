@@ -7,6 +7,18 @@
 \newpage
 
 \section{Introduction}
+The goal of this project is to develop a software for the detection and segmentation  of hands. The software is divided in two main modules:
+\begin{itemize}
+    \item \textbf{Hand detection module}: this module detects the hands inside a given image and draws the corresponding ROI (Bounding Boxes);
+    \item \textbf{Hand segmentation module}: this was developed to segment those same hands detected by the previous model.
+\end{itemize}
+
+The program is developed using both C++ and Python, the first one is used to process the images using the OpenCV library, extract the dataset and perform
+the segmentation, whilst the Python part has the sole purpose of performing the detection using a CNN specifically designed for object detection.
+
+The Hand detection module is based on the use of the \textbf{YOLO}(You Only Look Once) CNN model, which is considered amongst the most efficient object detection algorithms
+along with the R-CNN and Fast R-CNN architectures. The goal is to take a known CNN architecture for the YOLO model and train it using the dataset that we will be extracted using
+a class that will be implemented into the project.
 
 \section{Image preprocessing [2 hrs]}
 \chapterauthor{Roberto del Ben, Youssef Ben khalifa}
@@ -155,7 +167,7 @@ directory that acts as the connection point between the c++ and python modules: 
 by the CNN, that same file is then read by the first module and draws the bounding boxes based on the coordinates written in the csv file. Finally the input image is 
 returned with the bounding boxes added.
 
-\subsection{Entry point Main()}
+\subsection{Entry point for the module}
 
 The entire program's entry point is the first c++ module, which requires a string specifying the input image path:
 
@@ -287,7 +299,7 @@ is then passed along to the \textit{detectROI}; this function return the output 
 \end{lstlisting}
 
 \subsection{YOLO model}
-This is a particular type of CNN which we trained on the egohands dataset we extracted at the beginning of the project. It is based on the YOLOv3 architecture, which is a convolutional neural network designed specifically
+This is a particular type of CNN which we re-trained on the egohands dataset we extracted at the beginning of the project. It is based on the YOLOv3 architecture, which is a convolutional neural network designed specifically
 for object detection and classification:
 
 \begin{figure}[!h]
@@ -308,7 +320,7 @@ which we found at the beginning of the \textit{main.py} script. The object is lo
 in which we find all the methods needed to initlize the object and perform the detection. We then defined the model as follows:
 
 \begin{lstlisting}[]
-nc: 3
+nc: 1
 depth_multiple: 0.33
 width_multiple: 0.50
 
@@ -410,13 +422,256 @@ probability of the image analyzed by the module to be a hand. The \textit{confid
 The main reason for such a low confidence value is the simple fact that we are interested in detecting one single class label, which is 'hand'. All other possible labels are considered as 
 'notHand', therefore not detected. Thus 50\% of the detected labels are hands.
 
+\subsection{Model training}
+The training of the YOLO model was done using the \textit{train.py} script, which is found in the \textit{yolo} directory: the script 
+can be executed by typing
+\begin{lstlisting}[]
+    !python train.py --img 416 --batch 32 --epochs 25 
+        --data <path to the dataset configuration file> 
+        --cfg <path to the model configuration file>
+\end{lstlisting} 
+
+in the terminal. The needed file must be \textit{.yaml} files, which we easily converted to from the original \textit{.csv} files 
+we got during our dataset extraction using a simple tool found online. 
+
+The training was done using roughly 1000 images per epoch, and a batch size of 32: the training of one single model took about 2.5 hours to complete
+running on a local machine with a dedicated GPU. The configuration file are finally saved in the \textit{models/yolo} folder, which we then used 
+to perform the detection. In total we attempted the detection using 3 different models, each with different configuration parameters and structures 
+and choose the best one based on the evaluation ran on a separate test set extracted using our Dataset class from the c++ module.
+Here are the results of the evaluation:
+\begin{itemize}
+    \item \textbf{Model 1}: training score: 0.988, test score: 0.981;
+    \item \textbf{Model 2}: training score: 0.879, test score: 0.872;
+    \item \textbf{Model 3}: training score: 0.953, test score: 0.918; 
+\end{itemize}
+
+\subsection{Overfitting and Data augmentation}
+The main problem we may encounter by using mostly images from the same dataset to train the CNN models is overfitting. This may happen whenever
+the training dataset may not be diverse enough, and lead to generating features that work perfectly as long as we work on the same data that come from 
+the same source. We can avoid this problem by using data augmentation, which is a technique that allows us to generate various type of images from the 
+same images we have in our dataset, by simply applying random transformations, and applying different size rescales onto the images.
+
 \section{Hand Segmentation}
 \chapterauthor{Robert del Ben}
-
+\newpage
 \section{Benchmark results}
+
+\subsection{Hand detection}
+Here are the Benchmark results of the Hand detection module form the first 20 images of the Benchmark folder that was given to us:
+
+\begin{figure}[!h]
+    \centering
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/01.jpg}
+        \caption{01.jpg - Score = 0.996582}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/02.jpg}
+        \caption{02.jpg - Score = 0.949414}
+       
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/03.jpg}
+        \caption{03.jpg - Score = 0.995508}
+       
+    \end{subfigure}
+       \caption{extracted dataaset samples}
+       
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/04.jpg}
+        \caption{04.jpg - Score = 0.994824}
+       
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/05.jpg}
+        \caption{05.jpg - Score = 0.932324}
+        
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/06.jpg}
+        \caption{06.jpg - Score = 0.922852}
+        
+    \end{subfigure}
+       \caption{extracted dataaset samples}
+       
+\end{figure}
+
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/07.jpg}
+        \caption{07.jpg - Score = 0.876497}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/08.jpg}
+        \caption{08.jpg - Score = 0.994336}
+       
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/09.jpg}
+        \caption{09.jpg - Score = 0.938281}
+        
+    \end{subfigure}
+       \caption{extracted dataaset samples}
+       
+\end{figure}
+
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/10.jpg}
+        \caption{10.jpg - Score = 0.931445}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/11.jpg}
+        \caption{11.jpg - Score = 0.918620}
+        
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/12.jpg}
+        \caption{12.jpg - Score = 0.941895}
+        
+    \end{subfigure}
+       \caption{extracted dataaset samples}
+       
+\end{figure}
+
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/13.jpg}
+        \caption{13.jpg - Score = 0.899609}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/14.jpg}
+        \caption{14.jpg - Score = 0.925391}
+        
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/15.jpg}
+        \caption{15.jpg - Score = 0.939063}
+       
+    \end{subfigure}
+       \caption{extracted dataaset samples}
+       
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/16.jpg}
+        \caption{16.jpg - Score = 0.898242}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/17.jpg}
+        \caption{17.jpg - Score = 0.851823}
+        
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/18.jpg}
+        \caption{18.jpg - Score = 0.931738}
+        
+    \end{subfigure}
+       \caption{extracted dataaset samples}
+       
+\end{figure}
+
+
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/19.jpg}
+        \caption{19.jpg - Score = 0.918034}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/20.jpg}
+        \caption{20.jpg - Score = 0.994336}
+        
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handDetection/test.jpg}
+        \caption{Random image}
+        
+    \end{subfigure}
+       \caption{extracted dataaset samples}
+       
+\end{figure}
+
+
+\newpage
+
 
 \section{Failed attempts}
 
+For the detection module, we first tried using a simple CNN from scratch and train it as a simple classifier, to then scan the entire image
+using a pre-fixed sized window and classify it as a hand or notHand. This method was not successful, as the results were not very good: the model
+in fact suffering from serious overfitting and the detection took way too long for it to be a viable solution.
+We then trained different CNN configurations, but all of them failed to perform the detection in a reasonable amount of time, and also 
+the results were very sensible to the chosen size of the window. 
+
+Next we tried to implement the detection using \textit{haar} features, which were not successful either, as the trained model
+was again suffering from overfitting and heavy noise sensibility: the haar features performed reasonably well and within a decent amount
+of processing time, but as soon as we tried images that did not come from the egohands dataset the results got much worse.
+
+Finally the last thing we tried was to train and use two CNN's in parallel and perform the classification using the output of both.
+The first CNN was trained as the first one on an enhanced dataset w.r.t. the original one, and it was trained using the segmented hand images;
+the second one was trained on a dataset containing the same images onto which we applied a line detection algorithm: for that we recycled the canny and 
+hough transform algorithm we used in one of the laboratories during the course. The results were decent enough, but there was still the problem of running time,
+especially since when we deal with 1280x720 images. 
+
 \section{Final Considerations}
+For the hand detection module, the usage of multiple CNN's to attempt to detect and classify hands or any type of object made us realize just 
+how sensible the results depend on the dataset we used to train the different nets: most of them worked only if the detection window was the same 
+as the one used for training, others suffered from extreme overfitting and noise sensitivity. It is not surprising that even 
+the results from the implement YOLO model, which was the most efficient one we tried, still ended up with some overfitting from adopting
+mainly one single dataset. 
+
+The main improvement on the hand detection algorithm is then the creation and usage of a more diverse dataset to train the CNN's, in order to avoid phenomenon.
+As for the rest of the first module it works very well on the Benchmark images, in fact we do not have one single detection score which is under 85\%, 
+and also thanks to the usage of the tensorflow library and a discrete GPU the algorithm revealed to be very fast. The main reason for this efficiency, however,
+is the YOLO model architecture we decided to adopt for our detector: thanks to optimized layers and configuration the search for the ROI's inside the image
+was extremely fast compared to any other CNN we used thus far.
 
 \end{document}
