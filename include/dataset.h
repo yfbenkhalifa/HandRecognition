@@ -65,7 +65,7 @@ public:
     static void subMatrix(Mat src, Mat dst, int posX, int posY, int sizeX, int sizeY);
     static Mat cutImage(Mat src, HandMetadata boundingBox);
     static vector<string> splitstr(string str, string deli);
-    static vector<int> readCSV(string path);
+    static vector<int> readCSV(string path, char delimiter = ',');
     static bool computeMask(Mat src, Mat dst, Mat mask);
     static string readFileIntoString(const string &path);
     static Mat applyMask(Mat src, Mat mask);

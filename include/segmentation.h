@@ -1,4 +1,4 @@
-#include <meanshift.h>
+#include <MeanShift.h>
 #include <opencv2/core.hpp>
 
 using namespace cv;
@@ -9,7 +9,6 @@ class HandsSegmentation {
     vector<Rect> handRois;
     int ms_spatial_bandwidth;
     double ms_color_bandwidth;
-    bool use_skin_detector;
 
     vector<Cluster> clusters;
 
@@ -22,8 +21,7 @@ class HandsSegmentation {
     void ShowClusterizedImage(const Mat &image, const vector<Cluster> &clusters);
 
   public:
-    HandsSegmentation(const Mat &_input, const vector<Rect> _rois, const int &_spatial_bandwidth, const double &_color_bandwidth, const bool &_use_skin_detector = true) {
-        use_skin_detector = _use_skin_detector;
+    HandsSegmentation(const Mat &_input, const vector<Rect> _rois, const int &_spatial_bandwidth, const double &_color_bandwidth) {
         image = _input;
         handRois = _rois;
         ms_spatial_bandwidth = _spatial_bandwidth;

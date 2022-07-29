@@ -1,32 +1,20 @@
-#include "common.h"
-#include "dataset.h"
-#include "evaluation.h"
-#include "segmentation.h"
-#include "utils.h"
-#include <dirent.h>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
-#include <stdio.h>
-#include <string>
-#include <vector>
-
-#include <iostream>
-
-#include <Python.h>
-using namespace std;
-using namespace cv;
+#pragma once
+    #include "common.h"
+    #include "dataset.h"
+    #include "evaluation.h"
+    #include "preprocess.h"
+    #include "segmentation.h"
+    #include "utils.h"
 
 //Change this command to "python ../python/main.py" if in your system the python module is not found by "python"
 string pytohnCommand = "python3 ../python/main.py ";
 //It is important that this is the same foolder specified in the python module
 string activeDir = "../activeDir/";
-
+//Directory for saving the evalutation results
 string saveDir = "../results/handDetection/";
 
-
-int main(int argcc, char **argv) {
+/* Hand segmentation entry point */
+int mainClustering(int argcc, char **argv) {
     string imagesPath = "../dataset/rgb/*";
 
     vector<std::string> files;
@@ -36,19 +24,21 @@ int main(int argcc, char **argv) {
 
     for (const string &file : files) {
         cout << file << endl;
-        Mat input = imread(file);
+        Mat input = imread(file), preprocessed = input.clone();
+        // Preprocess::sharpenImage(input, input);
+        // bilateralFilter(input, preprocessed, -1, 10, 10);
+        // imshow("Preprocessed", preprocessed);
+        // waitKey();
 
         vector<Rect> gt_rectangles = Utils::getGroundTruthRois(file);
         Mat gt_mask = Utils::getGroundTruthMask(file);
 
-        Mat temp(input.size(), CV_8UC1, Scalar(0));
+        int rectangles_area = 0;
 
         for (int i = 0; i < gt_rectangles.size(); i++)
-            temp(gt_rectangles[i]).setTo(Scalar(255));
+            rectangles_area += gt_rectangles[i].area();
 
-        int rectangles_area = countNonZero(temp);
-
-        HandsSegmentation segmentor(input, gt_rectangles, 4, 6);
+        HandsSegmentation segmentor(preprocessed, gt_rectangles, 4, 5);
 
         Mat output = segmentor.DrawSegments();
 
@@ -137,7 +127,6 @@ Mat drawROI(Mat src, vector<HandMetadata> hands)
 /* Hand detection module entry point:
 // It takes a Mat object representing the input 
 */  
-
 Mat handDetectionModule(Mat src)
 {
     Mat srcOriginal = src.clone();
@@ -150,10 +139,27 @@ Mat handDetectionModule(Mat src)
     vector<HandMetadata> hands = detect(src);
     Mat dst = drawROI(srcOriginal, hands);
 
+    
+    //Clean up temporary files
+    std::remove("../activeDir/test.csv");
+    std::remove("../activeDir/test.jpg");
+    std::remove("../activeDir/src.jpg");
+
     return dst;
 }
 
-int main2(int argcc, char **argv) {
-   
+int main(int argcc, char **argv) {
+    // string image = "test";
+    // string datasetDir = "../dataset/rgb/";
+    // Mat src = imread(datasetDir + image + ".jpg");
+    // cout << "Processing Image" << endl;
+    // Mat dst = handDetectionModule(src);
+    // cout << "Saving Image" << endl;
+    // // vector<int> detected = Dataset::readCSV("../activeDir/test.csv");
+    // // vector<int> label = Dataset::readCSV("../dataset/det/"+ image+ ".txt");
+    // // double score = evaluateBox(detected, label);
+    // // cout << "Score: " + to_string(score) << endl;
+    // imwrite(saveDir + image + ".jpg", dst);
+    
     return -1;
 }

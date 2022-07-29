@@ -382,11 +382,10 @@ string Dataset::readFileIntoString(const string &path)
     return ss.str();
 }
 
-vector<int> Dataset::readCSV(string path)
+vector<int> Dataset::readCSV(string path, char delimiter)
 {
     string filename(path);
     string file_contents;
-    char delimiter = ',';
 
     file_contents = readFileIntoString(filename);
 

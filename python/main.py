@@ -1,4 +1,6 @@
 import csv
+
+from cv2 import IMREAD_ANYCOLOR
 from CNNClass import *
 from YOLO import *
 import cv2
@@ -54,7 +56,6 @@ def detect(srcPath):
         x, y, w, h = detection
         handFrame = src[x:x+w, y:y+h]
         savepath = activeDir + "test.jpg"
-        cv2.imwrite(savepath, handFrame)
         #predicetedSrc = cnn.predict(savepath)
         # print(predicetedSrc)
         rows.append([x, y, w, h])
