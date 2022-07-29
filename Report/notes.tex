@@ -545,6 +545,14 @@ the same source. We can avoid this problem by using data augmentation, which is 
 same images we have in our dataset, by simply applying random transformations, and applying different size rescales onto the images.
 
 
+\subsection{Usage}
+The detection can be done calling the \textbf{handDetectionModule()} function we find in the \textit{main.cpp} source file, which takes as paramters a Mat object representing 
+the input image. It return a Mat object with the drawing boxes drawn on top of the input image. 
+
+\subsection{Important Notes}
+Note that the only way that the c++ and python module can communicate and work properly together in thought the \textbf{activeDir} directory we find 
+the root project folder, so DO NOT DELETE the activeDir, or if you do, recreate it! 
+
 \section{Hand Segmentation Module}
 \chapterauthor{Roberto del Ben}
 
