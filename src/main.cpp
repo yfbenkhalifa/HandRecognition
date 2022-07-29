@@ -129,7 +129,7 @@ int main(int argcc, char **argv) {
             detected_rectangles.push_back(hands[i].getBoundingBox());
         }
 
-        HandsSegmentation segmentor(input, detected_rectangles, 4, 6);
+        HandsSegmentation segmentor(input, detected_rectangles, 4, 4);
 
         Mat output = segmentor.DrawSegments();
 

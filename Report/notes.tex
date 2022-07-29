@@ -609,7 +609,9 @@ The MeanShift class accepts 3 parameters:
 \end{itemize}
 
 The split of the spatial bandwidth and the color bandwidth guarrantees to
-preserve discontinuities of the image.
+preserve discontinuities of the image. Also our implementation consider the 
+spatial bandwidth as a $Step$ kernel function, while for color bandwidth
+a $Gaussian$ kernel is being used.
 
 Once initialized the clustering method can be called with the function
 \textit{cluster}:
@@ -700,8 +702,34 @@ Mat HandsSegmentation::MSSegment(const Mat &input,
     return CreateMaskFromCluster(max_cluster, input.size());
 }
 \end{lstlisting}
-\newpage
+
+\subsection{Entry point}
+
+This module requires an initialization with the constructor in order to store:
+\begin{itemize}
+    \item Original image
+    \item Rois containing the detected hands
+    \item Spatial bandwidth
+    \item Color bandwidth
+    \item A flag to indicate whether to use the coarse segmentation of the skin (default true)
+\end{itemize}
+\begin{lstlisting}[language = c++]
+    HandsSegmentation segmenter(input, detected_rectangles, 4, 4);
+    \end{lstlisting}
+Then the module is ready to start the computation calling the function \textit{DrawSegments()}, 
+which returns the original image with the overlay of the segmented hands.
+
+Also the module exposes the global mask of the segmented hands.
+
+\begin{lstlisting}[language = c++]
+    Mat output = segmenter.DrawSegments();
+
+    Mat mask = segmenter.mask;
+\end{lstlisting}
+
+\clearpage
 \section{Benchmark results}
+\chapterauthor{Youssef Ben Khalifa}
 
 \subsection{Hand detection}
 Here are the Benchmark results of the Hand detection module form the first 20 images of the Benchmark folder that was given to us:
@@ -721,18 +749,14 @@ Here are the Benchmark results of the Hand detection module form the first 20 im
         \caption{02.jpg - Score = 0.949414}
        
     \end{subfigure}
+    \hfill
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/03.jpg}
         \caption{03.jpg - Score = 0.995508}
        
     \end{subfigure}
-       \caption{extracted dataaset samples}
-       
-\end{figure}
 
-\begin{figure}
-    \centering
     \begin{subfigure}[b]{0.3 \textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/04.jpg}
@@ -746,19 +770,14 @@ Here are the Benchmark results of the Hand detection module form the first 20 im
         \caption{05.jpg - Score = 0.932324}
         
     \end{subfigure}
+    \hfill
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/06.jpg}
         \caption{06.jpg - Score = 0.922852}
         
     \end{subfigure}
-       \caption{extracted dataaset samples}
        
-\end{figure}
-
-
-\begin{figure}
-    \centering
     \begin{subfigure}[b]{0.3 \textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/07.jpg}
@@ -772,19 +791,14 @@ Here are the Benchmark results of the Hand detection module form the first 20 im
         \caption{08.jpg - Score = 0.994336}
        
     \end{subfigure}
+    \hfill
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/09.jpg}
         \caption{09.jpg - Score = 0.938281}
         
     \end{subfigure}
-       \caption{extracted dataaset samples}
        
-\end{figure}
-
-
-\begin{figure}
-    \centering
     \begin{subfigure}[b]{0.3 \textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/10.jpg}
@@ -798,18 +812,20 @@ Here are the Benchmark results of the Hand detection module form the first 20 im
         \caption{11.jpg - Score = 0.918620}
         
     \end{subfigure}
+    \hfill
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/12.jpg}
         \caption{12.jpg - Score = 0.941895}
         
     \end{subfigure}
-       \caption{extracted dataaset samples}
+    \caption{Detection on dataset samples 01-12}
        
 \end{figure}
 
 
-\begin{figure}
+
+\begin{figure}[!h]
     \centering
     \begin{subfigure}[b]{0.3 \textwidth}
         \centering
@@ -824,18 +840,14 @@ Here are the Benchmark results of the Hand detection module form the first 20 im
         \caption{14.jpg - Score = 0.925391}
         
     \end{subfigure}
+    \hfill
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/15.jpg}
         \caption{15.jpg - Score = 0.939063}
        
     \end{subfigure}
-       \caption{extracted dataaset samples}
-       
-\end{figure}
 
-\begin{figure}
-    \centering
     \begin{subfigure}[b]{0.3 \textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/16.jpg}
@@ -849,20 +861,14 @@ Here are the Benchmark results of the Hand detection module form the first 20 im
         \caption{17.jpg - Score = 0.851823}
         
     \end{subfigure}
+    \hfill
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/18.jpg}
         \caption{18.jpg - Score = 0.931738}
         
     \end{subfigure}
-       \caption{extracted dataaset samples}
        
-\end{figure}
-
-
-
-\begin{figure}
-    \centering
     \begin{subfigure}[b]{0.3 \textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/19.jpg}
@@ -876,21 +882,24 @@ Here are the Benchmark results of the Hand detection module form the first 20 im
         \caption{20.jpg - Score = 0.994336}
         
     \end{subfigure}
+    \hfill
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/handDetection/test.jpg}
         \caption{Random image}
         
     \end{subfigure}
-       \caption{extracted dataaset samples}
+    \caption{Detection on dataset samples 13-20}
        
 \end{figure}
+
+\clearpage
 
 Here are the numerical results of the bounding boxes (x,y,width,height) of the hand detected in the images.
 % Please add the following required packages to your document preamble:
 % \usepackage[table,xcdraw]{xcolor}
 % If you use beamer only pass "xcolor=table" option, i.e. \documentclass[xcolor=table]{beamer}
-\begin{table}[]
+\begin{table}[h!]
     \centering
     \begin{tabular}{ccc}
     \rowcolor[HTML]{BCBCBC} 
@@ -911,26 +920,220 @@ Here are the numerical results of the bounding boxes (x,y,width,height) of the h
     \end{tabular}
     \end{table}
 
+    % Please add the following required packages to your document preamble:
+    % \usepackage[table,xcdraw]{xcolor}
+    % If you use beamer only pass "xcolor=table" option, i.e. \documentclass[xcolor=table]{beamer}
+    \begin{table}[]
+        \centering
+        \begin{tabular}{ccc}
+        \rowcolor[HTML]{BCBCBC} 
+        \multicolumn{1}{l}{\cellcolor[HTML]{BCBCBC}{\color[HTML]{000000} \textbf{Image}}} & \multicolumn{1}{l}{\cellcolor[HTML]{BCBCBC}{\color[HTML]{000000} \textbf{Score}}} & \multicolumn{1}{l}{\cellcolor[HTML]{BCBCBC}\textbf{Box Values}}                                                                     \\ \hline
+        \multicolumn{1}{|c|}{14.jpg}                                                      & \multicolumn{1}{c|}{0.925391}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}458,305,152,210\\ 759,386,170,141\\ 654,471,191,235\\ 244,488,236,203\end{tabular}}  \\ \hline
+        \multicolumn{1}{|c|}{15.jpg}                                                      & \multicolumn{1}{c|}{0.939063}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}893,336,159,127\\ 650,266,160,122\\ 634,357,199,169\end{tabular}}                    \\ \hline
+        \multicolumn{1}{|c|}{16.jpg}                                                      & \multicolumn{1}{c|}{0.898242}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}452,117,148,112\\ 886,110,394,532\end{tabular}}                                      \\ \hline
+        \multicolumn{1}{|c|}{17.jpg}                                                      & \multicolumn{1}{c|}{0.851823}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}92,184,183,179\\ 388,152,122,182\\ 683,477,351,231\end{tabular}}                     \\ \hline
+        \multicolumn{1}{|c|}{18.jpg}                                                      & \multicolumn{1}{c|}{0.931738}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}542,461,269,255\\ 212,432,295,281\\ 1003,227,118,237\\ 818,319,371,322\end{tabular}} \\ \hline
+        \multicolumn{1}{|c|}{19.jpg}                                                      & \multicolumn{1}{c|}{0.918034}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}794,439,125,124\\ 598,383,320,334\\ 191,464,163,186\end{tabular}}                    \\ \hline
+        \multicolumn{1}{|c|}{20.jpg}                                                      & \multicolumn{1}{c|}{0.994336}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}687,413,280,281\\ 725,336,77,107\\ 533,344,28,85\end{tabular}}                       \\ \hline
+        \end{tabular}
+        \end{table}
 
-\newpage
+\clearpage
 
-% Please add the following required packages to your document preamble:
-% \usepackage[table,xcdraw]{xcolor}
-% If you use beamer only pass "xcolor=table" option, i.e. \documentclass[xcolor=table]{beamer}
-\begin{table}[]
+\subsection{Hand segmentation [2 hrs]}
+\chapterauthor{Roberto del Ben}
+
+All the test for hand segmentation indicate that the discriminative value that has most impact on pixel accuracy is the color bandwidth.
+So I looped the algorithm over all the dataset seeking for the most suitable color bandwidth value.
+The value with best pixel accuracy so far is $5$, with a overall pixel accuracy of $0.980497$. Results with this value are shown in the following images and numerically summarized in a table
+at the end of the section.
+
+\begin{figure}[!h]
+    \centering
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/01.jpg}
+        \caption{01.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/02.jpg}
+        \caption{02.jpg}
+       
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/03.jpg}
+        \caption{03.jpg}
+       
+    \end{subfigure}
+
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/04.jpg}
+        \caption{04.jpg}
+       
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/05.jpg}
+        \caption{05.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/06.jpg}
+        \caption{06.jpg}
+        
+    \end{subfigure}
+       
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/07.jpg}
+        \caption{07.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/08.jpg}
+        \caption{08.jpg}
+       
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/09.jpg}
+        \caption{09.jpg}
+        
+    \end{subfigure}
+       
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/10.jpg}
+        \caption{10.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/11.jpg}
+        \caption{11.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/12.jpg}
+        \caption{12.jpg}
+        
+    \end{subfigure}
+
+        \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/13.jpg}
+        \caption{13.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/14.jpg}
+        \caption{14.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/15.jpg}
+        \caption{15.jpg}
+       
+    \end{subfigure}
+
+    \caption{Segmentation on dataset samples 01-15}
+       
+\end{figure}
+
+
+
+\begin{figure}[!h]
+    \centering
+
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/16.jpg}
+        \caption{16.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/17.jpg}
+        \caption{17.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/18.jpg}
+        \caption{18.jpg}
+        
+    \end{subfigure}
+       
+    \begin{subfigure}[b]{0.3 \textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/19.jpg}
+        \caption{19.jpg}
+        
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/handSegmentation/20.jpg}
+        \caption{20.jpg}
+        
+    \end{subfigure}
+    \hfill
+
+    \caption{Segmentation on dataset samples 16-20}
+\end{figure}
+
+\begin{table}[h!]
     \centering
     \begin{tabular}{ccc}
     \rowcolor[HTML]{BCBCBC} 
-    \multicolumn{1}{l}{\cellcolor[HTML]{BCBCBC}{\color[HTML]{000000} \textbf{Image}}} & \multicolumn{1}{l}{\cellcolor[HTML]{BCBCBC}{\color[HTML]{000000} \textbf{Score}}} & \multicolumn{1}{l}{\cellcolor[HTML]{BCBCBC}\textbf{Box Values}}                                                                     \\ \hline
-    \multicolumn{1}{|c|}{14.jpg}                                                      & \multicolumn{1}{c|}{0.925391}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}458,305,152,210\\ 759,386,170,141\\ 654,471,191,235\\ 244,488,236,203\end{tabular}}  \\ \hline
-    \multicolumn{1}{|c|}{15.jpg}                                                      & \multicolumn{1}{c|}{0.939063}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}893,336,159,127\\ 650,266,160,122\\ 634,357,199,169\end{tabular}}                    \\ \hline
-    \multicolumn{1}{|c|}{16.jpg}                                                      & \multicolumn{1}{c|}{0.898242}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}452,117,148,112\\ 886,110,394,532\end{tabular}}                                      \\ \hline
-    \multicolumn{1}{|c|}{17.jpg}                                                      & \multicolumn{1}{c|}{0.851823}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}92,184,183,179\\ 388,152,122,182\\ 683,477,351,231\end{tabular}}                     \\ \hline
-    \multicolumn{1}{|c|}{18.jpg}                                                      & \multicolumn{1}{c|}{0.931738}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}542,461,269,255\\ 212,432,295,281\\ 1003,227,118,237\\ 818,319,371,322\end{tabular}} \\ \hline
-    \multicolumn{1}{|c|}{19.jpg}                                                      & \multicolumn{1}{c|}{0.918034}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}794,439,125,124\\ 598,383,320,334\\ 191,464,163,186\end{tabular}}                    \\ \hline
-    \multicolumn{1}{|c|}{20.jpg}                                                      & \multicolumn{1}{c|}{0.994336}                                                     & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}687,413,280,281\\ 725,336,77,107\\ 533,344,28,85\end{tabular}}                       \\ \hline
+    \multicolumn{1}{l}{\cellcolor[HTML]{BCBCBC}{\color[HTML]{000000} \textbf{Image}}} & \multicolumn{1}{l}{\cellcolor[HTML]{BCBCBC}{\color[HTML]{000000} \textbf{Accuracy}}} & \multicolumn{1}{l}{\cellcolor[HTML]{BCBCBC}\textbf{ROIs accuracy}}                                                                     \\ \hline
+    \multicolumn{1}{|c|}{01.jpg}                                                      & \multicolumn{1}{c|}{0.991249}                                                     & \multicolumn{1}{c|}{0.838454}                       \\ \hline
+    \multicolumn{1}{|c|}{02.jpg}                                                      & \multicolumn{1}{c|}{0.995158}                                                     & \multicolumn{1}{c|}{0.890629}                       \\ \hline
+    \multicolumn{1}{|c|}{03.jpg}                                                      & \multicolumn{1}{c|}{0.995188}                                                     & \multicolumn{1}{c|}{0.90071}                       \\ \hline
+    \multicolumn{1}{|c|}{04.jpg}                                                      & \multicolumn{1}{c|}{0.99469}                                                     & \multicolumn{1}{c|}{0.851065}                       \\ \hline
+    \multicolumn{1}{|c|}{05.jpg}                                                      & \multicolumn{1}{c|}{0.992398}                                                     & \multicolumn{1}{c|}{0.868971}                       \\ \hline
+    \multicolumn{1}{|c|}{06.jpg}                                                      & \multicolumn{1}{c|}{0.98849}                                                     & \multicolumn{1}{c|}{0.88299}                       \\ \hline
+    \multicolumn{1}{|c|}{07.jpg}                                                      & \multicolumn{1}{c|}{0.98134}                                                     & \multicolumn{1}{c|}{0.878065}                       \\ \hline
+    \multicolumn{1}{|c|}{08.jpg}                                                      & \multicolumn{1}{c|}{0.990567}                                                     & \multicolumn{1}{c|}{0.85287}                       \\ \hline
+    \multicolumn{1}{|c|}{09.jpg}                                                      & \multicolumn{1}{c|}{0.993681}                                                     & \multicolumn{1}{c|}{0.729179}                       \\ \hline
+    \multicolumn{1}{|c|}{10.jpg}                                                      & \multicolumn{1}{c|}{0.991379}                                                     & \multicolumn{1}{c|}{0.839938}                       \\ \hline
+    \multicolumn{1}{|c|}{11.jpg}                                                      & \multicolumn{1}{c|}{0.986956}                                                     & \multicolumn{1}{c|}{0.835139}                       \\ \hline
+    \multicolumn{1}{|c|}{12.jpg}                                                      & \multicolumn{1}{c|}{0.963344}                                                     & \multicolumn{1}{c|}{0.838872}                       \\ \hline
+    \multicolumn{1}{|c|}{13.jpg}                                                      & \multicolumn{1}{c|}{0.98318}                                                     & \multicolumn{1}{c|}{0.85017}                       \\ \hline
+    \multicolumn{1}{|c|}{14.jpg}                                                      & \multicolumn{1}{c|}{0.974145}                                                     & \multicolumn{1}{c|}{0.836776}                       \\ \hline
+    \multicolumn{1}{|c|}{15.jpg}                                                      & \multicolumn{1}{c|}{0.982184}                                                     & \multicolumn{1}{c|}{0.770748}                       \\ \hline
+    \multicolumn{1}{|c|}{16.jpg}                                                      & \multicolumn{1}{c|}{0.950827}                                                     & \multicolumn{1}{c|}{0.786552}                       \\ \hline
+    \multicolumn{1}{|c|}{17.jpg}                                                      & \multicolumn{1}{c|}{0.979173}                                                     & \multicolumn{1}{c|}{0.877487}                       \\ \hline
+    \multicolumn{1}{|c|}{18.jpg}                                                      & \multicolumn{1}{c|}{0.927559}                                                     & \multicolumn{1}{c|}{0.762616}                       \\ \hline
+    \multicolumn{1}{|c|}{19.jpg}                                                      & \multicolumn{1}{c|}{0.959747}                                                     & \multicolumn{1}{c|}{0.682674}                       \\ \hline
+    \multicolumn{1}{|c|}{20.jpg}                                                      & \multicolumn{1}{c|}{0.988677}                                                     & \multicolumn{1}{c|}{0.861342}                       \\ \hline
     \end{tabular}
+    \caption{Table summarizing pixel accuracy over the whole image and considering only ROIs}
     \end{table}
+
+
+\clearpage
 
 
 \section{Failed attempts}
@@ -949,7 +1152,11 @@ Finally the last thing we tried was to train and use two CNN's in parallel and p
 The first CNN was trained as the first one on an enhanced dataset w.r.t. the original one, and it was trained using the segmented hand images;
 the second one was trained on a dataset containing the same images onto which we applied a line detection algorithm: for that we recycled the canny and 
 hough transform algorithm we used in one of the laboratories during the course. The results were decent enough, but there was still the problem of running time,
-especially since when we deal with 1280x720 images. 
+especially since when we deal with 1280x720 images.
+
+For the coarse hand segmentation with skin color detection we tried to use also the HSV color space, but it performed too selective filtering.
+
+We also tried to apply Mean-Shift to the whole image, with unusable computation time.
 
 \section{Final Considerations}
 For the hand detection module, the usage of multiple CNN's to attempt to detect and classify hands or any type of object made us realize just 
@@ -963,5 +1170,12 @@ As for the rest of the first module it works very well on the Benchmark images, 
 and also thanks to the usage of the tensorflow library and a discrete GPU the algorithm revealed to be very fast. The main reason for this efficiency, however,
 is the YOLO model architecture we decided to adopt for our detector: thanks to optimized layers and configuration the search for the ROI's inside the image
 was extremely fast compared to any other CNN we used thus far.
+
+Considering the hand segmentation module the main concern is the runtime speed, really not suitable for realtime application. On the other hand accuracy shows 
+very good results. I can think about two solutions for the runtime speed:
+\begin{itemize}
+    \item Port the Mean shifted algorithm to GPU hardware
+    \item Avoid meanshift and rely only on coarse detection (very fast, but pretty inaccurate)
+\end{itemize}
 
 \end{document}
