@@ -60,10 +60,22 @@ void Preprocess::sharpenImage(const Mat &input, Mat &output) {
     // Mat sharp;
     // Mat sharpening_kernel = (Mat_<double>(3, 3) << -1, -1, -1, -1, 9, -1, -1, -1, -1);
     // filter2D(input, output, -1, sharpening_kernel);
-    double sigma = 4, amount = 1;
+
+    Mat temp;
+    cvtColor(input, temp, COLOR_BGR2HSV);
+
+    Mat *channels = new Mat[3];
+    split(temp, channels);
+
+    double sigma = 2, amount = 2;
     Mat blurry;
-    GaussianBlur(input, blurry, Size(), sigma);
-    addWeighted(input, 1 + amount, blurry, -amount, 0, output);
+
+    GaussianBlur(channels[1], blurry, Size(), sigma);
+    addWeighted(channels[1], 1 + amount, blurry, -amount, 0, channels[1]);
+
+    merge(channels, 3, temp);
+
+    cvtColor(temp, output, COLOR_HSV2BGR);
 }
 
 void Preprocess::laplacian(const Mat &input, Mat &output) {

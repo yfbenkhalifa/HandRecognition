@@ -17,8 +17,16 @@ class Sample {
     Sample() {}
 
     Sample(vector<double> _color, vector<double> _location) {
-        color = _color;
-        location = _location;
+        color = vector<double>(_color.size(), 0);
+        location = vector<double>(_location.size(), 0);
+        originalLocation = vector<double>(_location.size(), 0);
+
+        for (int i = 0; i < _color.size(); i++)
+            color[i] = _color[i];
+        for (int i = 0; i < _location.size(); i++)
+            location[i] = _location[i];
+        for (int i = 0; i < _location.size(); i++)
+            originalLocation[i] = _location[i];
     }
 
     Sample(const Mat &image, int row, int col, int offsetX = 0, int offsetY = 0) {

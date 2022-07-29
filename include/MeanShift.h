@@ -15,7 +15,7 @@ struct Cluster {
 
 class MeanShift {
   private:
-    static const int MAX_THREADS = 20;
+    static const int MAX_THREADS = 12;
     static const int MAX_ITERATIONS = 5;
     static const int MIN_COLOR_SHIFT = 0.3;
     static const int MIN_LOCATION_SHIFT = 0.3;
@@ -25,19 +25,13 @@ class MeanShift {
 
     Sample *shifted_points;
 
-    Sample pruneSample = Sample({0, 0, 0}, {20, 20});
-
     const int neighbors[8][2] = {{-1, 0}, {-1, -1}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
-
-    double (*kernel_func)(double, double);
     Mat image;
-
-    void set_kernel(double (*_kernel_func)(double, double));
 
     Sample shift_point(const Sample &point);
     void meanshiftSinglePoint(const Sample &point);
-
     void meanshift(const std::vector<Sample> &points);
+    
     std::vector<Cluster> cluster(const Sample *shifted_points);
 
     vector<Point> grow(const Sample *shifted_points, const vector<Point> &points, int *mask, const int &clusterIndex);

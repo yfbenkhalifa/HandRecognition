@@ -3,6 +3,7 @@
 #include "evaluation.h"
 #include "preprocess.h"
 #include "segmentation.h"
+#include "utils.h"
 #include <dirent.h>
 #include <filesystem>
 #include <fstream>
@@ -19,7 +20,7 @@ using namespace std;
 using namespace cv;
 
 string pytohnCommand = "python3 ../python/main.py ";
-string activeDir = "../activeDir/";
+string activeDir = "../output/";
 string saveDir = "../results/handDetection/";
 int detectionWidth, detectionHeight;
 int detectOffsetX, detectOffsetY;
@@ -27,17 +28,6 @@ int maxHands = 4;
 double scoreThreshold = 0.95;
 
 vector<Scalar> colors = {(255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 0, 255), (0, 255, 255), (150, 200, 50)};
-
-std::vector<int> explode(std::string const &s, char delim) {
-    std::vector<int> result;
-    std::istringstream iss(s);
-
-    for (std::string token; std::getline(iss, token, delim);) {
-        result.push_back(stoi(std::move(token)));
-    }
-
-    return result;
-}
 
 int mainClustering(int argcc, char **argv) {
     string imagesPath = "../dataset/rgb/*";
@@ -49,75 +39,27 @@ int mainClustering(int argcc, char **argv) {
 
     for (const string &file : files) {
         cout << file << endl;
-        Mat input = imread(file);
-        Mat preprocessed = input.clone();
-
-        // imshow("Input", input);
-
-        // GaussianBlur(input, preprocessed, Size(7, 7), 10);
-        // Preprocess::saturate(input, preprocessed);
-        Mat temp;
-        bilateralFilter(input, preprocessed, -1, 25, 10);
-        // Preprocess::sharpenImage(preprocessed, preprocessed);
-        // Preprocess::equalize(preprocessed, preprocessed);
-        // Preprocess::saturate(preprocessed, preprocessed);
-
+        Mat input = imread(file), preprocessed = input.clone();
+        // Preprocess::sharpenImage(input, input);
+        // bilateralFilter(input, preprocessed, -1, 10, 10);
         // imshow("Preprocessed", preprocessed);
-
-        // laplacian(preprocessed);
         // waitKey();
 
-        string det_path = "../dataset/det/";
-        string det_file = file.substr(15, file.length() - 19);
-        det_path.append(det_file).append(".txt");
-        ifstream myfile(det_path);
-
-        vector<Rect> rectangles;
-        if (myfile.is_open()) {
-            string line;
-            while (getline(myfile, line)) {
-                vector<int> params = explode(line, '\t');
-                if (params.size() < 4)
-                    params = explode(line, ' ');
-                rectangles.push_back(Rect(params[0], params[1], params[2], params[3]));
-            }
-            myfile.close();
-        }
-
-        Mat mask(input.size(), CV_8UC1);
-        mask.setTo(0);
+        vector<Rect> gt_rectangles = Utils::getGroundTruthRois(file);
+        Mat gt_mask = Utils::getGroundTruthMask(file);
 
         int rectangles_area = 0;
 
-        for (int i = 0; i < rectangles.size(); i++) {
-            Mat roi = preprocessed(rectangles[i]);
-            Mat mask_roi = mask(rectangles[i]);
+        for (int i = 0; i < gt_rectangles.size(); i++)
+            rectangles_area += gt_rectangles[i].area();
 
-            // bilateralFilter(roi, preprocessed, 7, 20, 150);
-            // Preprocess::saturate(preprocessed, preprocessed);
+        HandsSegmentation segmentor(preprocessed, gt_rectangles, 4, 5);
 
-            // imshow("Preprocessed", preprocessed);
+        Mat output = segmentor.DrawSegments();
 
-            Mat color_mask = Segmentation::GetSkinMask(roi);
-            // color_mask.copyTo(mask_roi);
-            cvtColor(color_mask, color_mask, COLOR_GRAY2BGR);
+        Utils::saveOutput(file, output);
 
-            bitwise_and(roi, color_mask, roi);
-
-            Mat output = Segmentation::ClusterWithMeanShift(roi, 4, 6);
-
-            mask_roi |= output;
-
-            rectangles_area += rectangles[i].area();
-
-            // imshow("Mask", mask);
-            // waitKey();
-        }
-
-        string mask_path = "../dataset/mask/";
-        string mask_file = file.substr(15, file.length() - 19);
-        mask_path.append(mask_file).append(".png");
-        Mat gt_mask = imread(mask_path, IMREAD_GRAYSCALE);
+        Mat mask = segmentor.mask;
 
         double error = evaluateMask(gt_mask, mask) / rectangles_area;
 

@@ -9,21 +9,8 @@
 
 using namespace std;
 
-#define CLUSTER_EPSILON 100
-
 double gaussian_kernel(double distance, double kernel_bandwidth) {
     return exp(-1.0 / 2.0 * (distance * distance) / (kernel_bandwidth * kernel_bandwidth));
-
-    // if (distance < kernel_bandwidth)
-    //     return 1;
-    // return 0;
-}
-
-void MeanShift::set_kernel(double (*_kernel_func)(double, double)) {
-    if (!_kernel_func)
-        kernel_func = gaussian_kernel;
-    else
-        kernel_func = _kernel_func;
 }
 
 Sample MeanShift::shift_point(const Sample &point) {
@@ -53,9 +40,9 @@ Sample MeanShift::shift_point(const Sample &point) {
             double colorDistance = point.colorDistanceFrom(current);
             double locationDistance = point.locationDistanceFrom(current);
 
-            double weight = gaussian_kernel(colorDistance, color_bandwidth); // colorDistance < color_bandwidth ? 1 : 0;
+            double weight = gaussian_kernel(colorDistance, color_bandwidth);
 
-            if (weight == 0)
+            if (1 / weight == 1 / 0.0)
                 continue;
 
             Sample temp = current * weight;
@@ -70,6 +57,8 @@ Sample MeanShift::shift_point(const Sample &point) {
 }
 
 void MeanShift::meanshiftSinglePoint(const Sample &point) {
+    int index = point.originalLocation[0] + point.originalLocation[1] * image.cols;
+
     Sample prev_point(point);
     Sample point_new = shift_point(point);
     int i = 0;
@@ -84,13 +73,10 @@ void MeanShift::meanshiftSinglePoint(const Sample &point) {
         point_new = shift_point(point_new);
     }
 
-    int index = point_new.originalLocation[0] + point_new.originalLocation[1] * image.cols;
     shifted_points[index] = point_new;
 }
 
 void MeanShift::meanshift(const vector<Sample> &_points) {
-
-    shifted_points = new Sample[image.cols * image.rows];
     vector<thread> threads;
     int current_progress = 10;
     double progress = 0;
@@ -186,6 +172,13 @@ vector<Cluster> MeanShift::cluster(const Sample *shifted_points) {
 }
 
 vector<Cluster> MeanShift::cluster(const std::vector<Sample> &points) {
+    shifted_points = new Sample[image.cols * image.rows];
+    for (int i = 0; i < image.cols * image.rows; i++) {
+        double x = i % image.cols;
+        double y = i / image.cols;
+        shifted_points[i] = Sample({0, 0, 0}, {x, y});
+    }
+
     meanshift(points);
     return cluster(shifted_points);
 }
