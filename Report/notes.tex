@@ -11,39 +11,62 @@
 \section{Image preprocessing [2 hrs]}
 \chapterauthor{Roberto del Ben, Youssef Ben khalifa}
 
-The first thing we need in the entire project is to define a pre-processing pattern for every image. The aim of pre-processing is to transform the image into a form 
-that is easier to process, that is, we want to remove as much noise as possible without losing the important information, while also enhancing the main features and 
-improving the general visual representation of the image. This is quite important, as the processes we will use to perform both the detection and the segmentation 
-can be very sensible to additional noise and they are also based on some features of the image that in some cases may not be noticeable from the raw image.
+The first thing we need in the entire project is to define a pre-processing
+pattern for every image. The aim of pre-processing is to transform the image
+into a form
+that is easier to process, that is, we want to remove as much noise as possible
+without losing the important information, while also enhancing the main
+features and
+improving the general visual representation of the image. This is quite
+important, as the processes we will use to perform both the detection and the
+segmentation
+can be very sensible to additional noise and they are also based on some
+features of the image that in some cases may not be noticeable from the raw
+image.
 
 For each image we will then apply the following:
 \begin{itemize}
-    \item \textbf{Bilateral/Gaussian filter}: This filter is a very effective way to remove noise from the image;
-    \item \textbf{Derivative Filter}: Using an appropriate kernel, we apply a spatial filter to the image to enhance small details and edges;
-    \item \textbf{Histogram Equalization}: This filter is a very effective way to enhance the contrast of the image;
-    \item \textbf{Gamma Correction}: It is used to enhance the lighting situation in the image, in order to remove dark and light areas that hide important features of the image,;
+    \item \textbf{Bilateral/Gaussian filter}: This filter is a very effective
+          way to remove noise from the image;
+    \item \textbf{Derivative Filter}: Using an appropriate kernel, we apply a
+          spatial filter to the image to enhance small details and edges;
+    \item \textbf{Histogram Equalization}: This filter is a very effective way
+          to enhance the contrast of the image;
+    \item \textbf{Gamma Correction}: It is used to enhance the lighting
+          situation in the image, in order to remove dark and light areas that
+          hide
+          important features of the image,;
 \end{itemize}
 
 \section{Dataset creation and extraction [9 hrs]}
 \chapterauthor{Youssef Ben khalifa}
-We based the project on the EgoHands dataset, which is the same one used for the benchmarking of the hand detection and segmentation algorithms. The dataset is available at the following link:
+We based the project on the EgoHands dataset, which is the same one used for
+the benchmarking of the hand detection and segmentation algorithms. The dataset
+is available at the following link:
 
 http://vision.soic.indiana.edu/projects/egohands/
 
-since the goal is use a CNN to detect the hands, and as mentioned the benchmarking will be done partly on the same dataset, to avoid overfitting we used, in addition to the EgoHands dataset, 
+since the goal is use a CNN to detect the hands, and as mentioned the
+benchmarking will be done partly on the same dataset, to avoid overfitting we
+used, in addition to the EgoHands dataset,
 the following set of images:
 
 https://www.kaggle.com/datasets/shyambhu/hands-and-palm-images-dataset
 
-The EgoHands dataset was provided with the source RGB images along with the respective bounding boxes labels as a \textit{csv} file and the masks for the segmentation. We then processed 
-the dataset in order to extract the single hand frames from each image, both segmented and not, for them to be then used for the training of the CNN and eventually the evaluation for the entire 
-project. 
-
+The EgoHands dataset was provided with the source RGB images along with the
+respective bounding boxes labels as a \textit{csv} file and the masks for the
+segmentation. We then processed
+the dataset in order to extract the single hand frames from each image, both
+segmented and not, for them to be then used for the training of the CNN and
+eventually the evaluation for the entire
+project.
 
 \subsection{Dataset definition}
 
-To start off, we defined the structure of our dataset in the c++ module, which can be found the \textit{dataset.h} file: in particular we defined the \textit{HandMetadata} and \textit{Image}
-as follows: 
+To start off, we defined the structure of our dataset in the c++ module, which
+can be found the \textit{dataset.h} file: in particular we defined the
+\textit{HandMetadata} and \textit{Image}
+as follows:
 
 \begin{lstlisting}[]
     class HandMetadata
@@ -92,23 +115,44 @@ public:
 
 \end{lstlisting}
 
-these classed are the ones used throughout the project to help us keep track of the images and the hands we detect within those same images dataset.
-The \textit{HandMetadata} object is in charge of holding all the needed information about a single detected hand, specifying the boundingBox coordinates 
-through the attributes $(PosX, PosY, Width, Height)$ and some flags that will determine whether the image is read correctly.
+these classed are the ones used throughout the project to help us keep track of
+the images and the hands we detect within those same images dataset.
+The \textit{HandMetadata} object is in charge of holding all the needed
+information about a single detected hand, specifying the boundingBox
+coordinates
+through the attributes $(PosX, PosY, Width, Height)$ and some flags that will
+determine whether the image is read correctly.
 
-The Image class instead holds information about the source image, keeping track of RGB source image, the mask and the csv associated file containing the box information;
-more importantly in the class is defined a \textit{vector<HandMetadata>} which is the one attribute that memorize the hands detected in the images. Along with the attributes
+The Image class instead holds information about the source image, keeping track
+of RGB source image, the mask and the csv associated file containing the box
+information;
+more importantly in the class is defined a \textit{vector<HandMetadata>} which
+is the one attribute that memorize the hands detected in the images. Along with
+the attributes
 are defined all the necessary methods to read a given dataset.
 
 \subsection{Dataset extraction}
-As mentioned earlier, in order to train our CNN we will need all the labelled samples from the raw dataset that we downloaded. Fortunately the EgoHands dataset came 
-pre-packed with some MatLab scripts that allowed us the extract all the images, the masks and the csv files. After we ran the MatLab scripts we found ourselves with roughly 5000 
-rgb images, 5000 grey-scale masks and 5000 csv files. From those images what we need are the segmented hand images and the RGB images with the bounding boxes, this heavy 
-task was accomplished by running the \textit{createDataset()} function defined in the \textit{Dataset} class (you can find the code in the appendix); 
+As mentioned earlier, in order to train our CNN we will need all the labelled
+samples from the raw dataset that we downloaded. Fortunately the EgoHands
+dataset came
+pre-packed with some MatLab scripts that allowed us the extract all the images,
+the masks and the csv files. After we ran the MatLab scripts we found ourselves
+with roughly 5000
+rgb images, 5000 grey-scale masks and 5000 csv files. From those images what we
+need are the segmented hand images and the RGB images with the bounding boxes,
+this heavy
+task was accomplished by running the \textit{createDataset()} function defined
+in the \textit{Dataset} class (you can find the code in the appendix);
 
-The function writes into separate directories the set of segmented hand images, the hand images cut using the respecting bounding box coordinates and all the remaining background images
-which will be then lablled as 'notHand'. Those sets are then splitted into training and test dataset folders using a $0.8-0.2$ split ratio. As the raw dataset is quite large, the function takes
-an additional argument $maxSize$ which is an integer specifying the maximum size of the dataset we want to extract. Here are some examples of the extracted images:
+The function writes into separate directories the set of segmented hand images,
+the hand images cut using the respecting bounding box coordinates and all the
+remaining background images
+which will be then lablled as 'notHand'. Those sets are then splitted into
+training and test dataset folders using a $0.8-0.2$ split ratio. As the raw
+dataset is quite large, the function takes
+an additional argument $maxSize$ which is an integer specifying the maximum
+size of the dataset we want to extract. Here are some examples of the extracted
+images:
 
 \begin{figure}
     \centering
@@ -132,34 +176,46 @@ an additional argument $maxSize$ which is an integer specifying the maximum size
         \caption{Background image}
         \label{fig:five over x}
     \end{subfigure}
-       \caption{extracted dataaset samples}
-       \label{fig:three graphs}
+    \caption{extracted dataset samples}
+    \label{fig:three graphs}
 \end{figure}
 
-before each image is extracted, we preprocess the source image by applying a Gaussian blur, a sharpening filter and gamma correction. The preprocessing is done in order to remove
-the noise and to make the image more contrasty, while also adjusting the lighting.
+before each image is extracted, we preprocess the source image by applying a
+Gaussian blur, a sharpening filter and gamma correction. The preprocessing is
+done in order to remove
+the noise and to make the image more contrasty, while also adjusting the
+lighting.
 
 \section{Hand detection module [8 hrs]}
 \chapterauthor{Youssef Ben khalifa}
-The hand detection module is composed by two main components: 
+The hand detection module is composed by two main components:
 
-the fisrt one is developed in C++ acts ad the entry point for the entire program, and it is responsible for the 
+the fisrt one is developed in C++ acts ad the entry point for the entire
+program, and it is responsible for the
 fetching the input image and perform the preprocessing on it.
 
-The second partm developed in python, performs the actual detection and classification of the image given as input argument 
-by the C++ module. 
+The second partm developed in python, performs the actual detection and
+classification of the image given as input argument
+by the C++ module.
 
-The detection is based on the usage of a pre-trained YOLO CNN for both the detection of the ROI in the image and the classification 
-of those based on two main classes, 'hand' and 'notHand'. The program then for each hand found writes into a csv file in determined 
-directory that acts as the connection point between the c++ and python modules: in that csv file are written the coordinates for each hand found and classified
-by the CNN, that same file is then read by the first module and draws the bounding boxes based on the coordinates written in the csv file. Finally the input image is 
+The detection is based on the usage of a pre-trained YOLO CNN for both the
+detection of the ROI in the image and the classification
+of those based on two main classes, 'hand' and 'notHand'. The program then for
+each hand found writes into a csv file in determined
+directory that acts as the connection point between the c++ and python modules:
+in that csv file are written the coordinates for each hand found and classified
+by the CNN, that same file is then read by the first module and draws the
+bounding boxes based on the coordinates written in the csv file. Finally the
+input image is
 returned with the bounding boxes added.
 
 \subsection{Entry point Main()}
 
-The entire program's entry point is the first c++ module, which requires a string specifying the input image path:
+The entire program's entry point is the first c++ module, which requires a
+string specifying the input image path:
 
-that image is then read using the $imread()$ method from the OpenCV library and fed to the $handDetectionModule()$ function the starts the detection: 
+that image is then read using the $imread()$ method from the OpenCV library and
+fed to the $handDetectionModule()$ function the starts the detection:
 
 \begin{lstlisting}
 
@@ -178,10 +234,12 @@ that image is then read using the $imread()$ method from the OpenCV library and 
     }
 
 \end{lstlisting}
-this function acts as the actual entry point for the hand detection module, as it takes as arguments the input image as a \textit{Mat} object and 
+this function acts as the actual entry point for the hand detection module, as
+it takes as arguments the input image as a \textit{Mat} object and
 starts off the detection chain:
 
-the Mat object is preprocessed with a Gaussin filter and a laplacian filter, then given as argument to the $detect()$ function
+the Mat object is preprocessed with a Gaussin filter and a laplacian filter,
+then given as argument to the $detect()$ function
 
 \begin{lstlisting}[language = c++]
     vector<HandMetadata> detect(Mat src) {
@@ -206,12 +264,18 @@ the Mat object is preprocessed with a Gaussin filter and a laplacian filter, the
 }
 \end{lstlisting}
 
-which starts off the python module for the detection and classification. 
+which starts off the python module for the detection and classification.
 
 \subsection{Python module}
-The python module is called using the command line terminal by the detect() function we had in the c++ module, through the command line no arguments are passed along,
-as the image to process is taken from the \textit{activeDir} folder used as the connection point between the two modules in which the input image is written by the 
-c++ module for the python program to read. As soon as the python module is loaded, the YOLO CNN model is loaded along with it from the local configuration files
+The python module is called using the command line terminal by the detect()
+function we had in the c++ module, through the command line no arguments are
+passed along,
+as the image to process is taken from the \textit{activeDir} folder used as the
+connection point between the two modules in which the input image is written by
+the
+c++ module for the python program to read. As soon as the python module is
+loaded, the YOLO CNN model is loaded along with it from the local configuration
+files
 saved under the directory \textit{python/models/YOLO}:
 
 \begin{lstlisting}[language=python]
@@ -223,7 +287,8 @@ saved under the directory \textit{python/models/YOLO}:
         quit()
 \end{lstlisting}
 
-the $detect()$ function reads the image path and loads it into the YOLO model to detect. 
+the $detect()$ function reads the image path and loads it into the YOLO model
+to detect.
 
 \begin{lstlisting}[language=python]
     def detect(srcPath):
@@ -242,15 +307,23 @@ the $detect()$ function reads the image path and loads it into the YOLO model to
     writeCsv(activeDir + "test.csv", rows)
 \end{lstlisting}
 
-In the detect method we read the image path and initialize it as a \textit{Mat} object from the \textit{cv2} library and feed it to the 
-yolo object through the $detectROI()$ function which returns a vector of bounding boxes. From those bounding boxes we extract the ROI for each hand and save it in the
+In the detect method we read the image path and initialize it as a \textit{Mat}
+object from the \textit{cv2} library and feed it to the
+yolo object through the $detectROI()$ function which returns a vector of
+bounding boxes. From those bounding boxes we extract the ROI for each hand and
+save it in the
 \textit{activeDir} folder as a \textit{csv} file.
 
 \subsection{ROI Drawing and output}
-Once the Python module is done writing the coordinates for the bounding boxes into the \textit{csv} file, 
-the a callback to the c++ module is done to continue the main execution and proceed to drawing the bounding boxes:
-this last task is achieved through the usage of the $drawROI()$ function. The function takes as arguments the vector of objects $HandMetadata$ which we previously
-read loaded from the csv file in the $detect()$ function using the following code:
+Once the Python module is done writing the coordinates for the bounding boxes
+into the \textit{csv} file,
+the a callback to the c++ module is done to continue the main execution and
+proceed to drawing the bounding boxes:
+this last task is achieved through the usage of the $drawROI()$ function. The
+function takes as arguments the vector of objects $HandMetadata$ which we
+previously
+read loaded from the csv file in the $detect()$ function using the following
+code:
 
 \begin{lstlisting}
     vector<int> handROICoords = readCSV(activeDir + "test.csv");
@@ -262,9 +335,13 @@ read loaded from the csv file in the $detect()$ function using the following cod
     }
 \end{lstlisting}
 
-amongst those line you'll notice a particular method called $readCSV()$, this is one is the same one we used during the dataset extraction at the beginning 
-which we can easily recycle to accomplish the task of reading the \textit{csv} file containing the Hands coordinates. The \textit{vector<HandMetadata> hands} 
-is then passed along to the \textit{detectROI}; this function return the output image, again as a \textit{Mat} object, with the bounding boxes drawn in different colors, one for each hand detected.
+amongst those line you'll notice a particular method called $readCSV()$, this
+is one is the same one we used during the dataset extraction at the beginning
+which we can easily recycle to accomplish the task of reading the \textit{csv}
+file containing the Hands coordinates. The \textit{vector<HandMetadata> hands}
+is then passed along to the \textit{detectROI}; this function return the output
+image, again as a \textit{Mat} object, with the bounding boxes drawn in
+different colors, one for each hand detected.
 
 \begin{lstlisting}[language = c++]
     Mat drawROI(Mat src, vector<HandMetadata> hands){
@@ -287,7 +364,9 @@ is then passed along to the \textit{detectROI}; this function return the output 
 \end{lstlisting}
 
 \subsection{YOLO model}
-This is a particular type of CNN which we trained on the egohands dataset we extracted at the beginning of the project. It is based on the YOLOv3 architecture, which is a convolutional neural network designed specifically
+This is a particular type of CNN which we trained on the egohands dataset we
+extracted at the beginning of the project. It is based on the YOLOv3
+architecture, which is a convolutional neural network designed specifically
 for object detection and classification:
 
 \begin{figure}[!h]
@@ -295,17 +374,20 @@ for object detection and classification:
     \includegraphics[scale = 0.5]{images/yolo1_net.png}
 \end{figure}
 
-in our program we initialize the YOLO object the code line 
+in our program we initialize the YOLO object the code line
 
 \begin{lstlisting}[language=python]
     yolo = YOLO('../python/models/yolo/yoloTrained.cfg',
             '../python/models/yolo/yoloTrained.weights', ["hand"])
 \end{lstlisting}
-in which we specify the class to detect and nothing else. All the other paramters are already set to the best values in the 
+in which we specify the class to detect and nothing else. All the other
+paramters are already set to the best values in the
 YOLO class constructor.
 
-which we found at the beginning of the \textit{main.py} script. The object is loaded form the class \textit{YOLO.py}
-in which we find all the methods needed to initlize the object and perform the detection. We then defined the model as follows:
+which we found at the beginning of the \textit{main.py} script. The object is
+loaded form the class \textit{YOLO.py}
+in which we find all the methods needed to initlize the object and perform the
+detection. We then defined the model as follows:
 
 \begin{lstlisting}[]
 nc: 3
@@ -348,11 +430,17 @@ head:
   ]
 \end{lstlisting}
 
-the same model is then trained using our custom dataset we extracted mostly from the egohands dataset and some third-party sources, using a dedicated python script we find in the \textit{yoloV5} folder.
-The script outputs two main files: a \textit{.cfg} file containing the configuration for our CNN, and a \textit{.weights} file containing the weights. Those files are the ones we find in the \textit{models/yolo} folder
-that will be loaded into the python script. 
+the same model is then trained using our custom dataset we extracted mostly
+from the egohands dataset and some third-party sources, using a dedicated
+python script we find in the \textit{yoloV5} folder.
+The script outputs two main files: a \textit{.cfg} file containing the
+configuration for our CNN, and a \textit{.weights} file containing the weights.
+Those files are the ones we find in the \textit{models/yolo} folder
+that will be loaded into the python script.
 
-The YOLO model is implemented into the python model through the \textit{YOLO.py} class we find under the \textit{python} directory, in which we find along with the constructor for 
+The YOLO model is implemented into the python model through the
+\textit{YOLO.py} class we find under the \textit{python} directory, in which we
+find along with the constructor for
 the class, the \textit{inference()} method:
 
 \begin{lstlisting}[language = python]
@@ -401,17 +489,166 @@ the class, the \textit{inference()} method:
         return results
 \end{lstlisting}
 
-which takes a \textit{Mat} object as input and returns a list of vector coordinates $(x,y,w,h)$, that correspond respectively $(x,y)$ 
-coordinates of the top-left corner of the box, its width and height. These values are returned for each hand detected in the input image.
+which takes a \textit{Mat} object as input and returns a list of vector
+coordinates $(x,y,w,h)$, that correspond respectively $(x,y)$
+coordinates of the top-left corner of the box, its width and height. These
+values are returned for each hand detected in the input image.
 
-The hand detection made by the YOLO module is particularly biased by one main parameter, which is the \textit{confidence}: this determines the 
-probability of the image analyzed by the module to be a hand. The \textit{confidence} is set to 0.5 by default, but can be changed in the constructor of the \textit{YOLO} class.
+The hand detection made by the YOLO module is particularly biased by one main
+parameter, which is the \textit{confidence}: this determines the
+probability of the image analyzed by the module to be a hand. The
+\textit{confidence} is set to 0.5 by default, but can be changed in the
+constructor of the \textit{YOLO} class.
 
-The main reason for such a low confidence value is the simple fact that we are interested in detecting one single class label, which is 'hand'. All other possible labels are considered as 
+The main reason for such a low confidence value is the simple fact that we are
+interested in detecting one single class label, which is 'hand'. All other
+possible labels are considered as
 'notHand', therefore not detected. Thus 50\% of the detected labels are hands.
 
-\section{Hand Segmentation}
-\chapterauthor{Robert del Ben}
+\section{Hand Segmentation Module}
+\chapterauthor{Roberto del Ben}
+
+\subsection{Coarse segmentation [2 hrs]}
+We chose to make a first coarse segmentation based on a range of colors that
+skin can have inside images. First of all we consider the \textit{YCrCb} color
+space, since in the RGB color space similar colors do not always correspond to
+similar values. Then, since this range isn't well defined due to
+different illumination sources or camera settings, we used a very large portion
+of the \textit{YCrCb} spectrum in order to exclude only very unlikely
+combinations. These values came from some researches done in the internet and
+validated through the dataset by the following code:
+
+\begin{lstlisting}[language = c++]
+    Mat HandsSegmentation::GetSkinMask() {
+        int min_cr = 135, max_cr = 180, min_cb = 85, max_cb = 135;
+        Mat ycrcb_range, ycrcb_ms_image;
+        cvtColor(image, ycrcb_ms_image, COLOR_BGR2YCrCb);
+        inRange(ycrcb_ms_image, Scalar(0, min_cr, min_cb), 
+                Scalar(255, max_cr, max_cb), ycrcb_range);
+    
+        Mat mask;
+        auto element_type = MORPH_ELLIPSE;
+        auto element_size = 6;
+        Mat element = getStructuringElement(element_type, 
+                        Size(element_size * 2 + 1, element_size * 2 + 1));
+
+        morphologyEx(ycrcb_range, mask, MORPH_CLOSE, element);
+    
+        return mask;
+    }
+\end{lstlisting}
+
+\subsection{Image clustering [16 hrs]}
+The first thought that concerned us about clustering is that picking a random
+image in the dataset, even with perfect detection we cannot know in advance how
+many clusters we should look for.
+This is the main reason why we chose to implement Mean Shift in order to
+clusterize the ROI containing a hand.
+
+\begin{lstlisting}[language = c++]
+    MeanShift(const Mat &_image, const int &_spatial_bandwidth = 4, 
+              const double &_color_bandwidth = 4);
+    \end{lstlisting}
+
+The MeanShift class accepts 3 parameters:
+\begin{itemize}
+    \item The ground image used as the underline sample group
+    \item Spatial bandwidth
+    \item Color bandwidth
+\end{itemize}
+
+The split of the spatial bandwidth and the color bandwidth guarrantees to
+preserve discontinuities of the image.
+
+Once initialized the clustering method can be called with the function
+\textit{cluster}:
+
+\begin{lstlisting}[language = c++]
+    std::vector<Cluster> cluster(const Sample *shifted_points);
+    \end{lstlisting}
+
+Sample is an utility class written to keep information about the shift of
+the points.
+Cluster is a \textit{struct} containing the converging mode and the list of
+points belonging to the cluster.
+
+We use the shifted points as input for a region growing algorithm to construct
+the vector of clusters. The growing rule is based on the color bandwidth and
+collects similar modes under the same cluster.
+
+\subsection{Hand segmentation [8 hrs]}
+We decided to speed up the algorithm implementing two tricks: the first is the
+use a FIFO queue ofthreads that manages to run the points shifting in a
+parallel process; the second is to shift only points that are not excluded by
+the skin detection in the coarse
+segmentation. This last point requires to exclude from the segmentation all the
+clusters with invalid mode, that is values with \textit{color = Scalar(0,0,0)}.
+
+\begin{lstlisting}[language = c++]
+    vector<Sample> HandsSegmentation::GetSamples(const Mat &from) {
+        vector<Sample> samples;
+    
+        for (int r = 0; r < from.rows; r += 1)
+            for (int c = 0; c < from.cols; c += 1) {
+                Sample temp = Sample(from, r, c);
+                if (temp.color[0] >= 1)
+                    samples.push_back(temp);
+            }
+    
+        return samples;
+    }
+\end{lstlisting}
+
+\begin{lstlisting}[language = c++]    
+    void MeanShift::meanshift(const vector<Sample> &_points) {
+        vector<thread> threads;
+        for_each(_points.begin(), _points.end(), [&](auto &&point) {
+            bool started = false;
+            while (!started) {
+                if (threads.size() < MAX_THREADS) {
+                    threads.push_back(thread(&MeanShift::meanshiftSinglePoint, 
+                                                this, point));
+                    started = true;
+    
+                } else {
+                    threads[0].join();
+                    threads.erase(threads.begin());
+                }
+            }
+        });
+    
+        while (threads.size() > 0) {
+            threads[0].join();
+            threads.erase(threads.begin());
+        }
+    }
+\end{lstlisting}
+
+Once MeanShift has completed we pick the largest cluster as the one
+that segments the hand. We expect the hand to cover the majority of the image,
+so if the largest cluster still does not occupy more than $40\%$ of the valid
+samples, the algorithm re-runs with a larger color bandwidth.
+
+\begin{lstlisting}[language = c++]
+Mat HandsSegmentation::MSSegment(const Mat &input, 
+        const int &spatial_bandwidth, const double &color_bandwidth) {
+
+    vector<Sample> samples = GetSamples(input);
+
+    MeanShift *ms = new MeanShift(input, spatial_bandwidth, color_bandwidth);
+
+    vector<Cluster> clusters = ms->cluster(samples);
+
+    Cluster max_cluster = SelectLargestCluster(clusters);
+
+    if (max_cluster.shifted_points.size() < 0.4 * samples.size()) {
+        cout << "Regeneration" << endl;
+        return MSSegment(input, spatial_bandwidth, color_bandwidth + 0.5);
+    }
+
+    return CreateMaskFromCluster(max_cluster, input.size());
+}
+\end{lstlisting}
 
 \section{Benchmark results}
 

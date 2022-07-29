@@ -112,9 +112,9 @@ Cluster HandsSegmentation::SelectLargestCluster(const vector<Cluster> clusters) 
 Mat HandsSegmentation::MSSegment(const Mat &input, const int &spatial_bandwidth, const double &color_bandwidth) {
     vector<Sample> samples = GetSamples(input);
 
-    MeanShift *c = new MeanShift(input, spatial_bandwidth, color_bandwidth);
+    MeanShift *ms = new MeanShift(input, spatial_bandwidth, color_bandwidth);
 
-    vector<Cluster> clusters = c->cluster(samples);
+    vector<Cluster> clusters = ms->cluster(samples);
 
     // ShowClusterizedImage(input, clusters);
 
