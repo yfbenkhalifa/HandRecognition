@@ -1,15 +1,11 @@
 import numpy as np 
 import pathlib
 
-import seaborn as sns 
-import matplotlib.pyplot as plt 
-
 import tensorflow as tf  
 from tensorflow.keras import layers
 from tensorflow.keras import Model  
 from tensorflow.keras.optimizers import RMSprop
 from keras_preprocessing.image import ImageDataGenerator
-
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
 
