@@ -1,7 +1,6 @@
 #include "common.h"
 #include "dataset.h"
 #include "evaluation.h"
-#include "preprocess.h"
 #include "segmentation.h"
 #include "utils.h"
 #include <dirent.h>
@@ -27,7 +26,7 @@ string activeDir = "../activeDir/";
 string saveDir = "../results/handDetection/";
 
 
-int mainClustering(int argcc, char **argv) {
+int main(int argcc, char **argv) {
     string imagesPath = "../dataset/rgb/*";
 
     vector<std::string> files;
@@ -37,21 +36,19 @@ int mainClustering(int argcc, char **argv) {
 
     for (const string &file : files) {
         cout << file << endl;
-        Mat input = imread(file), preprocessed = input.clone();
-        // Preprocess::sharpenImage(input, input);
-        // bilateralFilter(input, preprocessed, -1, 10, 10);
-        // imshow("Preprocessed", preprocessed);
-        // waitKey();
+        Mat input = imread(file);
 
         vector<Rect> gt_rectangles = Utils::getGroundTruthRois(file);
         Mat gt_mask = Utils::getGroundTruthMask(file);
 
-        int rectangles_area = 0;
+        Mat temp(input.size(), CV_8UC1, Scalar(0));
 
         for (int i = 0; i < gt_rectangles.size(); i++)
-            rectangles_area += gt_rectangles[i].area();
+            temp(gt_rectangles[i]).setTo(Scalar(255));
 
-        HandsSegmentation segmentor(preprocessed, gt_rectangles, 4, 5);
+        int rectangles_area = countNonZero(temp);
+
+        HandsSegmentation segmentor(input, gt_rectangles, 4, 6);
 
         Mat output = segmentor.DrawSegments();
 
@@ -156,7 +153,7 @@ Mat handDetectionModule(Mat src)
     return dst;
 }
 
-int main(int argcc, char **argv) {
+int main2(int argcc, char **argv) {
    
     return -1;
 }
