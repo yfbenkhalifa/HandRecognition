@@ -7,11 +7,12 @@
 #include "utils.h"
 
 // Change this command to "python ../python/main.py" if in your system the python module is not found by "python"
-string pytohnCommand = "python3 ../python/main.py ";
+string pythonCommand = "python3 ../python/main.py ";
 // It is important that this is the same foolder specified in the python module
 string activeDir = "../activeDir/";
 // Directory for saving the evalutation results
 string saveDir = "../results/handDetection/";
+string segmentationSaveDir = "../results/handSegmentation/";
 
 string exec(string command) {
 
@@ -39,7 +40,7 @@ string exec(string command) {
 vector<HandMetadata> detect(Mat src) {
     imwrite(activeDir + "src.jpg", src);
 
-    string command = pytohnCommand;
+    string command = pythonCommand;
     string result = exec(command);
     cout << result << endl;
     vector<int> handROICoords = Dataset::readCSV(activeDir + "test.csv");
@@ -87,13 +88,12 @@ Mat handDetectionModule(Mat src) {
     Mat dst = drawROI(srcOriginal, hands);
 
     // Clean up temporary files
-    std::remove("../activeDir/test.csv");
-    std::remove("../activeDir/test.jpg");
-    std::remove("../activeDir/src.jpg");
+    // std::remove("../activeDir/test.csv");
+    // std::remove("../activeDir/test.jpg");
+    // std::remove("../activeDir/src.jpg");
 
     return dst;
 }
-
 
 int main(int argcc, char **argv) {
     string imagesPath = "../dataset/rgb/*";
@@ -103,9 +103,14 @@ int main(int argcc, char **argv) {
 
     vector<double> errors;
 
+    std::ofstream error_file;
+    error_file.open(segmentationSaveDir + "results.txt");
+
     for (const string &file : files) {
         cout << file << endl;
         Mat input = imread(file);
+
+        error_file << file << endl;
 
         vector<Rect> gt_rectangles = Utils::getGroundTruthRois(file);
 
@@ -121,14 +126,14 @@ int main(int argcc, char **argv) {
         vector<Rect> detected_rectangles;
         auto hands = detect(input);
         for (int i = 0; i < hands.size(); i++) {
-            detected_rectangles.push_back(hands[i].BoundingBox);
+            detected_rectangles.push_back(hands[i].getBoundingBox());
         }
 
-        HandsSegmentation segmentor(input, gt_rectangles, 4, 6);
+        HandsSegmentation segmentor(input, detected_rectangles, 4, 6);
 
         Mat output = segmentor.DrawSegments();
 
-        Utils::saveOutput(file, output);
+        Utils::saveOutput(file, segmentationSaveDir, output);
 
         Mat mask = segmentor.mask;
 
@@ -136,12 +141,14 @@ int main(int argcc, char **argv) {
 
         errors.push_back(error);
 
-        cout << "Error: " << error << endl;
+        error_file << "Error: " << error << endl << endl;
     }
     double avg_error = 0;
     for (auto &error : errors)
         avg_error += error;
     avg_error /= errors.size();
-    cout << "ERRORE MEDIO: " << avg_error << endl;
+    error_file << "AVG ERROR: " << avg_error << endl;
+
+    error_file.close();
     return 0;
 }

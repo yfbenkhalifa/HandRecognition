@@ -45,9 +45,8 @@ class Utils {
         return imread(mask_path, IMREAD_GRAYSCALE);
     }
 
-    static void saveOutput(string file, Mat image) {
+    static void saveOutput(string file, string output_path, Mat image) {
         string output_file = file.substr(15, file.length() - 15);
-        string output_path = "../output/";
         output_path.append(output_file);
         imwrite(output_path, image);
     }

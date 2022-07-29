@@ -5,3 +5,4 @@ output
 *.clang-format
 models
 activeDir
+results

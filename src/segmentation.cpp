@@ -154,20 +154,21 @@ Mat HandsSegmentation::DrawSegments() {
     sort(handRois.begin(), handRois.end(), [](Rect a, Rect b) { return a.area() < b.area(); });
 
     for (int i = 0; i < handRois.size(); i++) {
-        Mat prepared_roi = preprocessed(handRois[i]), input;
+        Rect roi_rectangle = handRois[i] & cv::Rect(0, 0, image.cols, image.rows);
+        Mat prepared_roi = preprocessed(roi_rectangle), input;
 
         cvtColor(prepared_roi, input, COLOR_BGR2YCrCb);
         Mat hand_mask = HandsSegmentation::MSSegment(input, ms_spatial_bandwidth, ms_color_bandwidth);
 
-        Mat mask_roi = mask(handRois[i]);
+        Mat mask_roi = mask(roi_rectangle);
         bitwise_and(~mask_roi, hand_mask, hand_mask);
         mask_roi |= hand_mask;
 
         Scalar color = Utils::getColor(i);
-        Mat overlay(handRois[i].height, handRois[i].width, CV_8UC3, color), hand_mask_rgb, output_roi = output(handRois[i]);
+        Mat overlay(roi_rectangle.height, roi_rectangle.width, CV_8UC3, color), hand_mask_rgb, output_roi = output(roi_rectangle);
         cvtColor(hand_mask, hand_mask_rgb, COLOR_GRAY2BGR);
 
-        Mat image_roi = image(handRois[i]);
+        Mat image_roi = image(roi_rectangle);
         addWeighted(image_roi, 0.5, overlay, 0.5, 0, overlay);
         overlay.copyTo(output_roi, hand_mask);
     }
