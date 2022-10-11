@@ -34,4 +34,4 @@ Image Classification:
 - Load and classify training images;
 - CNN with the following parameters: First try with 1 Convolutional layer, 3 pooling layers and 5 Fully interconnected layers (just to try);
 
-Another approach can be using transfer learning:
+
